@@ -1,30 +1,51 @@
-# Adnan Bashir — Interactive Portfolio
+# Adnan Bashir — Portfolio + Website Builder
 
-Open **index.html** for the personal website and **projects.html** for all eight selected projects. The dark, peach, and muted-blue palette is retained from the first version.
+## Start here
 
-## What changed
+**Open index-builder.html to edit your website.** It is a standalone file: no server, installation, account, or API key is needed. The builder starts with your current portfolio and its original color palette.
 
-- The signal responds to the pointer within a bounded radius. Clicking or tapping sends a ripple through nearby lines.
-- Scrolling transforms the broad hero wave into two persistent fields along the page edges. Interaction remains local and subtle in the side fields.
-- Motion can be paused from the header. Reduced-motion preferences start the field paused; the ripple button is also available to keyboard users when motion is enabled.
-- More detail in the biography, research entries, and current teaching sections.
-- A separate eight-project collection, with four featured on the homepage. Each project opens in a new tab so the portfolio stays available.
+Open **index.html** to view the website, or **projects.html** to view the eight-project collection.
 
-## Upload to GitHub Pages
+## Change colors and content
 
-Upload the **contents** of this ZIP to your repository, keeping the folder structure:
+1. In **Colors**, choose one of eight palettes or adjust individual colors. Both signal colors, text, accents, the main background, and the teaching panel are editable.
+2. In **Content**, edit your name, introduction, biography, research, courses, project-page introduction, and footer. Headings support line breaks; list fields use one item per line.
+3. In **Projects**, edit project titles, descriptions, notes, and links. Choose whether to include each project and whether to feature it on the homepage. Move projects up or down, or add and remove cards.
+4. Use the homepage/projects and desktop/tablet/mobile selectors above the live preview. Scroll and move the pointer inside the preview to interact with the signal. External app links open from the exported website.
 
-- index.html
-- projects.html
-- portfolio.css
-- signal.js
-- projects-data.json
-- apps/ (all eight subfolders)
+**Original ember** always restores the original colors. The **Original website** entry in Versions restores the original content and colors together.
+
+## Save now, edit later
+
+- Your draft saves automatically in the current browser.
+- **Save version** creates a named snapshot. Enter an optional name in the Versions tab, or use the automatic name. Up to 20 snapshots are retained; the original design is always available separately.
+- Restoring a version or opening a design saves the current draft into Versions first.
+- **Export → Editable design · JSON** downloads a portable backup of the current content, colors, and project settings.
+- Later, open index-builder.html and click **Open design** to choose your JSON file. You can also open an index.html or projects.html previously exported by this builder: both contain the complete editable design.
+- Browser storage belongs to that browser and can be cleared. Keep a downloaded JSON copy when you want to preserve a design across computers or browser resets.
+- If browser storage is blocked or full, the editor reports it and leaves your current work available for download. If a restore-point save fails, the earlier stored draft is preserved; subsequent edits are labeled session-only until a save succeeds. Incomplete drafts can be saved and restored, while website exports require valid project links.
+
+The included **portfolio-design.json** is a backup of the current starting design. Open design supports this builder's design format and its exported HTML pages; it is not an importer for arbitrary websites.
+
+## Publish changes on GitHub Pages
+
+For your first upload, extract this complete ZIP and upload its contents to the repository. Keep the **apps/** folder structure.
+
+For later edits, choose **Export → Website pages ZIP** in the builder. It downloads:
+
+- index.html — your updated homepage
+- projects.html — your matching project collection
+- portfolio-design.json — editable design backup
 - .nojekyll
+- READ-ME.txt
 
-The README is optional for hosting. Upload extracted files, not the ZIP itself. Keep a copy or Git commit of your previous homepage before replacing index.html and projects.html. The portfolio uses portfolio.css, so your existing styles.css and unrelated project pages can stay in place.
+Replace the two HTML pages in your existing repository, and **keep your existing apps/ folder**. The builder's update ZIP contains the website pages and settings; it does not repackage the app files. Those eight apps are included in this complete portfolio package. When you add a new project card, upload its app or point the card at an existing external URL.
 
-For your main personal site, use the repository **ml-adnan-bashir.github.io**. In repository Settings → Pages, select **Deploy from a branch**, **main**, and **/ (root)**. The site address will be https://ml-adnan-bashir.github.io/ when GitHub completes deployment. The files also support project sites in a subdirectory: all internal links are relative. No backend, package installation, build step, or API key is required for the portfolio.
+The exported homepage and projects page contain their own CSS and interactive signal code. They do not need a separate stylesheet or signal.js. Updating a palette in the builder keeps both pages consistent when you export them together. The editor does not change the styling inside the eight independent apps.
+
+Keep index-builder.html and your design JSON wherever you prefer to edit; neither is required for the public website. Your previous unrelated styles.css and other project pages can stay in the repository.
+
+For the main personal site, use **ml-adnan-bashir.github.io**. In repository Settings → Pages, select **Deploy from a branch**, **main**, and **/ (root)**. The address will be https://ml-adnan-bashir.github.io/ when GitHub finishes deployment. All internal project links are relative, so subdirectory project sites are also supported.
 
 ## Selected projects
 
@@ -55,18 +76,12 @@ The portfolio and signal use no external libraries. Individual apps retain these
 - Tilt Scale is a physical-computing experiment, requiring a compatible phone, sensor permission, a balance setup, and a known calibration weight. Open it over HTTPS on GitHub Pages for sensor access.
 - Several apps optionally load Google Fonts; system font fallbacks remain available.
 
-## Editing
-
-Biography, research, and course text: index.html.
-Project cards: projects.html and the featured cards in index.html.
-Colors and layout: portfolio.css.
-Signal motion and interaction: signal.js.
-The projects-data.json file is an editable inventory; pages are pre-rendered HTML and do not fetch it at runtime. If you change the inventory, update the corresponding HTML cards too.
-
-The research descriptions do not claim publication status or benchmark results. Course themes are introductory summaries, not official syllabi. Add verified publication, CV, contact, and course-material links when ready.
-
 ## Validation
 
-Section links, local portfolio assets, selected app entrypoints, and JavaScript parsing were checked. The signal received a simulated-event smoke check for pointer/ripple changes, scroll positioning, pause, and reduced-motion behavior. No live network speed test, device sensor measurement, or browser visual test was performed.
+Checked standalone HTML and JSON export/reopen round trips, including Urdu, quotes, angle brackets, and literal script-closing text. Checked independent version snapshots, history limits, storage-failure handling, invalid import rejection, URL validation, all eight palettes, selected-project counts, local links, and inline JavaScript parsing. No browser visual test, live network speed test, or phone-sensor measurement was performed.
 
-Original signal artwork and portfolio design, with appreciation for https://openai.com/index/gpt-6-astra/ . Independent personal website; no OpenAI affiliation or endorsement.
+The signal retains pointer bending, click/tap ripples, scroll-to-side fields, a pause control, and reduced-motion support. The homepage and projects collection use the same saved palette.
+
+Research descriptions do not claim publication status or benchmark results. Course themes are introductory summaries, not official syllabi.
+
+Original portfolio and signal design, with appreciation for https://openai.com/index/gpt-6-astra/ . Independent personal website; no OpenAI affiliation or endorsement.
