@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Cantt Events — Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link id="font-link" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&family=Raleway:wght@400;500;600;700;800&family=Nunito:wght@300;400;600;700&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ─────────────────────────────────────────
+   DESIGN TOKENS — all customizable
+───────────────────────────────────────── */
+:root {
+  --accent:#2563eb; --accent-h:#1d4ed8; --accent-l:#eff6ff; --accent-rgb:37,99,235;
+  --green:#16a34a; --amber:#d97706; --red:#dc2626; --blue:#0284c7;
+  --green-l:#f0fdf4; --amber-l:#fffbeb; --red-l:#fef2f2; --blue-l:#f0f9ff;
+  --bg:#f1f5f9; --surface:#ffffff; --surface2:#f8fafc;
+  --border:#e2e8f0; --border2:#cbd5e1;
+  --text:#0f172a; --text2:#475569; --text3:#94a3b8;
+  --sidebar-w:252px; --radius:12px; --density:16px; --font-scale:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1),0 12px 40px rgba(0,0,0,.06);
+  --sidebar-pos:0;
+  /* ── layout tokens ── */
+  --topbar-h:56px;
+  --content-pad:20px;
+  --card-gap:16px;
+  --kpi-icon-sz:40px;
+  --kpi-val-sz:28px;
+  --kpi-label-sz:12px;
+  --card-title-sz:14px;
+  --card-pad:14px;
+  --table-font-sz:13px;
+  --table-pad:11px;
+  --th-font-sz:10px;
+  --hall-hero-h:160px;
+  --hall-name-sz:16px;
+  --hall-cap-sz:11px;
+  --nav-font-sz:13px;
+  --form-label-sz:11px;
+  --form-input-sz:13px;
+  --form-input-pad:9px;
+  --alert-font-sz:13px;
+  --hall-overlay-op:0.75;
+}
+[data-theme="dark"] {
+  --bg:#0d1117; --surface:#161b22; --surface2:#1c2128;
+  --border:#21262d; --border2:#30363d;
+  --text:#e6edf3; --text2:#8b949e; --text3:#484f58;
+  --accent-l:rgba(37,99,235,.15);
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;font-size:var(--font-scale);}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;transition:background .25s,color .25s;}
+
+/* ─── SIDEBAR ─── */
+#sidebar{
+  width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;z-index:50;
+  transition:all .25s;order:var(--sidebar-pos,0);
+}
+[data-sidebar="right"] #sidebar{border-right:none;border-left:1px solid var(--border);order:1;}
+.brand{padding:20px var(--density);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.brand-mark{width:34px;height:34px;background:var(--accent);border-radius:calc(var(--radius)*.7);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:16px;flex-shrink:0;}
+.brand-text{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);line-height:1.1;}
+.brand-sub{font-size:10px;color:var(--text3);font-weight:400;letter-spacing:.5px;}
+
+.nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-section{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:12px 8px 4px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all .15s;position:relative;margin-bottom:1px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-l);color:var(--accent);}
+.nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;font-weight:700;}
+
+.sidebar-footer{padding:12px 10px;border-top:1px solid var(--border);}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);}
+.user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.user-name{font-size:12px;font-weight:600;color:var(--text);}
+.user-role{font-size:10px;color:var(--text3);}
+
+/* ─── MAIN ─── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{
+  height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+  position:relative;z-index:40;
+}
+.topbar-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text);}
+.topbar-spacer{flex:1;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.topbar-btn:hover{border-color:var(--accent);color:var(--accent);}
+.topbar-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.topbar-btn.primary:hover{background:var(--accent-h);}
+.topbar-time{font-family:'Syne',sans-serif;font-size:12px;color:var(--text3);letter-spacing:.5px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.4);}50%{box-shadow:0 0 0 5px rgba(22,163,74,0);}}
+
+.content{flex:1;overflow-y:auto;padding:var(--content-pad);overflow-x:hidden;}
+.page{display:none;animation:fadein .2s ease;}
+.page.active{display:block;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ─── KPI CARDS ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--card-gap);margin-bottom:var(--card-gap);}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--density);display:flex;align-items:flex-start;gap:12px;box-shadow:var(--shadow);transition:all .2s;}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.kpi-icon{width:var(--kpi-icon-sz);height:var(--kpi-icon-sz);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--kpi-icon-sz) * 0.45);flex-shrink:0;}
+.kpi-icon.green{background:var(--green-l);}
+.kpi-icon.amber{background:var(--amber-l);}
+.kpi-icon.red{background:var(--red-l);}
+.kpi-icon.blue{background:var(--blue-l);}
+.kpi-val{font-family:'Syne',sans-serif;font-size:var(--kpi-val-sz);font-weight:700;color:var(--text);line-height:1;}
+.kpi-label{font-size:var(--kpi-label-sz);color:var(--text2);margin-top:3px;}
+.kpi-trend{font-size:11px;margin-top:4px;}
+.kpi-trend.up{color:var(--green);}
+.kpi-trend.dn{color:var(--red);}
+
+/* ─── CARDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:var(--card-pad) var(--density);border-bottom:1px solid var(--border);}
+.card-title{font-family:'Syne',sans-serif;font-size:var(--card-title-sz);font-weight:700;color:var(--text);}
+.card-body{padding:var(--density);}
+
+/* ─── FLEET PAGE ─── */
+.fleet-layout{display:grid;grid-template-columns:320px 1fr;gap:var(--card-gap);height:calc(100vh - var(--topbar-h) - 40px - 110px);}
+#fleet-map{border-radius:var(--radius);border:1px solid var(--border);height:100%;min-height:400px;}
+.vlist{height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.v-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);}
+.v-card:hover,.v-card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.12);}
+.v-card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.v-avatar{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;background:linear-gradient(135deg,var(--accent),#7c3aed);}
+.v-name{font-family:'Syne',sans-serif;font-size:var(--nav-font-sz);font-weight:700;}
+.v-type{font-size:11px;color:var(--text3);}
+.v-status{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;}
+.v-status-dot{width:7px;height:7px;border-radius:50%;}
+.v-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.v-metric{background:var(--surface2);border-radius:7px;padding:6px 8px;}
+.v-metric-val{font-family:'Syne',sans-serif;font-size:var(--nav-font-sz);font-weight:700;color:var(--text);}
+.v-metric-key{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-top:1px;}
+
+/* Fleet map detail panel */
+.fleet-detail{margin-top:14px;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.detail-item{background:var(--surface2);border-radius:8px;padding:10px 12px;}
+.detail-key{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:3px;}
+.detail-val{font-size:14px;font-weight:600;color:var(--text);}
+
+/* ─── STATUS PILLS ─── */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.pill-green{background:var(--green-l);color:var(--green);}
+.pill-amber{background:var(--amber-l);color:var(--amber);}
+.pill-red{background:var(--red-l);color:var(--red);}
+.pill-blue{background:var(--blue-l);color:var(--blue);}
+.pill-gray{background:var(--surface2);color:var(--text2);}
+
+/* ─── HALL BOOKING ─── */
+.hall-hero{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--card-gap);margin-bottom:var(--card-gap);}
+.hall-hero-card{
+  border-radius:var(--radius);overflow:hidden;cursor:pointer;
+  transition:all .2s;position:relative;height:var(--hall-hero-h);
+  box-shadow:var(--shadow);
+}
+.hall-hero-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.hall-hero-card.active{outline:3px solid var(--accent);outline-offset:2px;}
+.hall-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:all .4s;}
+.hall-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,var(--hall-overlay-op)) 0%,rgba(0,0,0,calc(var(--hall-overlay-op)*0.3)) 60%,rgba(0,0,0,calc(var(--hall-overlay-op)*0.1)) 100%);}
+.hall-content{position:absolute;bottom:0;left:0;right:0;padding:14px;}
+.hall-hname{font-family:'Syne',sans-serif;font-size:var(--hall-name-sz);font-weight:800;color:#fff;margin-bottom:3px;}
+.hall-hcap{font-size:var(--hall-cap-sz);color:rgba(255,255,255,.85);}
+.hall-avail{position:absolute;top:10px;right:10px;}
+
+/* Hall booking layout */
+.hall-layout{display:grid;grid-template-columns:1fr 340px;gap:var(--card-gap);}
+.cal-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--density);box-shadow:var(--shadow);}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-month{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.cal-nav{width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+.cal-nav:hover{border-color:var(--accent);color:var(--accent);}
+.cal-days-head{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+.cal-days-head div{text-align:center;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cday{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:9px;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;
+  position:relative;color:var(--text2);
+}
+.cday:hover{background:var(--surface2);color:var(--text);}
+.cday.today{background:var(--accent-l);color:var(--accent);font-weight:700;}
+.cday.booked{background:var(--red-l);color:var(--red);}
+.cday.booked::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--red);position:absolute;bottom:4px;}
+.cday.past{color:var(--text3);cursor:default;background:transparent!important;}
+.cday.selected{background:var(--accent)!important;color:#fff!important;font-weight:700;}
+.cday.empty{cursor:default;}
+
+/* Booking sidebar */
+.booking-sidebar{display:flex;flex-direction:column;gap:14px;}
+.booking-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--density);box-shadow:var(--shadow);}
+.form-group{margin-bottom:13px;}
+.form-label{font-size:var(--form-label-sz);font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:5px;display:block;}
+.form-control{
+  width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;
+  padding:var(--form-input-pad) 12px;color:var(--text);font-size:var(--form-input-sz);font-family:'DM Sans',sans-serif;
+  transition:border-color .15s;
+}
+.form-control:focus{outline:none;border-color:var(--accent);background:var(--surface);}
+.form-control option{background:var(--surface);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:9px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-h);transform:translateY(-1px);}
+.btn-danger{background:var(--red-l);color:var(--red);}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Bookings Table */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:var(--th-font-sz);letter-spacing:1px;text-transform:uppercase;color:var(--text3);font-weight:600;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:var(--table-pad) 14px;border-bottom:1px solid var(--border);font-size:var(--table-font-sz);color:var(--text2);}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--surface2);}
+
+/* ─── REPORTS ─── */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--card-gap);margin-bottom:var(--card-gap);}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--density);box-shadow:var(--shadow);}
+.chart-canvas{position:relative;height:220px;}
+.report-tabs{display:flex;gap:6px;margin-bottom:var(--card-gap);}
+.rtab{padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.rtab:hover,.rtab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ─── ALERTS ─── */
+.alert-feed{display:flex;flex-direction:column;gap:8px;}
+.alert-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px var(--density);display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);transition:all .15s;}
+.alert-row:hover{border-color:var(--accent);transform:translateX(2px);}
+.alert-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.alert-title{font-size:var(--alert-font-sz);font-weight:600;color:var(--text);}
+.alert-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.alert-time{margin-left:auto;font-size:11px;color:var(--text3);white-space:nowrap;}
+
+/* Nav items */
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:var(--nav-font-sz);font-weight:500;transition:all .15s;position:relative;margin-bottom:1px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-l);color:var(--accent);}
+
+/* ─────────────────────────────────────────
+   CUSTOMIZER PANEL — tabbed
+───────────────────────────────────────── */
+#customizer{
+  position:fixed;top:0;right:0;width:320px;height:100vh;
+  background:var(--surface);border-left:1px solid var(--border);
+  z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.15);
+}
+#customizer.open{transform:translateX(0);}
+.cust-head{padding:16px 18px 0;border-bottom:1px solid var(--border);}
+.cust-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cust-head-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.cust-close{width:28px;height:28px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.cust-close:hover{background:var(--red-l);color:var(--red);border-color:var(--red);}
+/* Tabs */
+.cust-tabs{display:flex;gap:2px;}
+.cust-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;}
+.cust-tab:hover{color:var(--text2);}
+.cust-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.cust-panel{display:none;flex:1;overflow-y:auto;padding:14px 18px;}
+.cust-panel.active{display:block;}
+.cust-section{margin-bottom:20px;}
+.cust-section-title{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.cust-row{margin-bottom:12px;}
+.cust-label{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.cust-label span{font-size:10px;color:var(--text3);font-weight:400;}
+
+/* Color swatches */
+.color-presets{display:flex;gap:6px;flex-wrap:wrap;}
+.color-swatch{width:26px;height:26px;border-radius:7px;cursor:pointer;transition:transform .15s;border:2px solid transparent;}
+.color-swatch:hover{transform:scale(1.15);}
+.color-swatch.active{border-color:var(--text);transform:scale(1.1);}
+.color-swatch-custom{display:flex;align-items:center;gap:6px;margin-top:7px;}
+.color-swatch-custom label{font-size:11px;color:var(--text3);}
+input[type=color]{width:30px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:2px;}
+
+/* Toggles */
+.toggle-group{display:flex;gap:5px;}
+.toggle-opt{flex:1;padding:7px 4px;border:1.5px solid var(--border);border-radius:7px;text-align:center;cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);transition:all .15s;}
+.toggle-opt:hover{border-color:var(--accent);color:var(--accent);}
+.toggle-opt.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Range slider */
+input[type=range]{width:100%;accent-color:var(--accent);height:4px;}
+.range-row{display:flex;align-items:center;gap:8px;}
+.range-row input{flex:1;}
+.range-val{font-size:11px;color:var(--accent);font-weight:600;min-width:34px;text-align:right;}
+.range-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:2px;}
+
+/* Hall image picker */
+.hall-img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.hall-img-opt{
+  height:52px;border-radius:7px;cursor:pointer;border:2px solid transparent;
+  background-size:cover;background-position:center;transition:all .15s;position:relative;overflow:hidden;
+}
+.hall-img-opt::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.35);}
+.hall-img-opt:hover{transform:scale(1.04);}
+.hall-img-opt.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
+.hall-img-opt.grad-opt{display:flex;align-items:center;justify-content:center;font-size:18px;}
+.hall-img-opt.grad-opt::after{display:none;}
+.hall-sel-tabs{display:flex;gap:4px;margin-bottom:8px;}
+.hall-sel-tab{padding:4px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text3);background:var(--surface2);}
+.hall-sel-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Cust footer */
+.cust-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px;}
+
+/* ─── MODAL ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:calc(var(--radius)*1.5);padding:28px;width:420px;max-width:90vw;box-shadow:var(--shadow-md);}
+.modal-icon{width:52px;height:52px;border-radius:13px;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px;}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px;}
+.modal-body{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+
+/* ─── MAPS ─── */
+.leaflet-container{background:var(--surface2)!important;}
+[data-theme="dark"] .leaflet-tile-pane{filter:brightness(.7) saturate(.6) invert(1) hue-rotate(180deg);}
+.leaflet-popup-content-wrapper{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);}
+.leaflet-popup-tip{background:var(--surface);}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important;}
+.vmap-popup{font-family:'DM Sans',sans-serif;min-width:170px;}
+.vmp-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px;}
+.vmp-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:4px 0;font-size:12px;}
+.vmp-row:last-child{border:none;}
+.vmp-k{color:var(--text3);}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+
+/* ─── RESPONSIVE HELPERS ─── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.mt{margin-top:16px;}
+.mb{margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">CE</div>
+    <div>
+      <div class="brand-text">Cantt Events</div>
+      <div class="brand-sub">Management System</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="goPage('dashboard',this)">
+      <span class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </span>
+      Dashboard
+    </div>
+    <div class="nav-section">Operations</div>
+    <div class="nav-item" onclick="goPage('halls',this)">
+      <span class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      </span>
+      Hall Booking
+    </div>
+    <div class="nav-item" onclick="goPage('fleet',this)">
+      <span class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8zM5.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm13 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+      </span>
+      Fleet Tracking
+    </div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="goPage('reports',this)">
+      <span class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </span>
+      Reports
+    </div>
+    <div class="nav-item" onclick="goPage('alerts',this)">
+      <span class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </span>
+      Alerts
+      <span class="nav-badge">5</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-av">AM</div>
+      <div>
+        <div class="user-name">Admin Manager</div>
+        <div class="user-role">Cantt Administrator</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="ptitle">Dashboard</div>
+    <div class="topbar-spacer"></div>
+    <div style="display:flex;align-items:center;gap:5px;"><div class="live-dot"></div><span class="topbar-time" id="livetime"></span></div>
+    <button class="topbar-btn primary" onclick="openCustomizer()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2m0 18v-2m7.07-2.93l-1.41-1.41M4.93 19.07l1.41-1.41M22 12h-2M2 12h2"/></svg>
+      Customize
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-icon green">🚗</div>
+          <div><div class="kpi-val" id="kpi-moving">—</div><div class="kpi-label">Vehicles Moving</div><div class="kpi-trend up" id="kpi-moving-sub"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-icon amber">🏛</div>
+          <div><div class="kpi-val" id="kpi-halls">3</div><div class="kpi-label">Halls Booked Today</div><div class="kpi-trend up">2 events tonight</div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-icon red">🔔</div>
+          <div><div class="kpi-val">5</div><div class="kpi-label">Active Alerts</div><div class="kpi-trend dn">1 SOS unresolved</div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-icon blue">📅</div>
+          <div><div class="kpi-val">24</div><div class="kpi-label">Monthly Bookings</div><div class="kpi-trend up">+6 vs last month</div></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Hall Status — Today</div></div>
+          <div class="table-wrap"><table><thead><tr><th>Hall</th><th>Capacity</th><th>Event</th><th>Status</th></tr></thead><tbody id="dash-halls"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Fleet Overview</div></div>
+          <div class="table-wrap"><table><thead><tr><th>Vehicle</th><th>Driver</th><th>Speed</th><th>Status</th></tr></thead><tbody id="dash-fleet"></tbody></table></div>
+        </div>
+      </div>
+      <div class="card mt">
+        <div class="card-head"><div class="card-title">Recent Alerts</div></div>
+        <div id="dash-alerts" class="card-body" style="padding:0;"></div>
+      </div>
+    </div>
+
+    <!-- FLEET -->
+    <div class="page" id="page-fleet">
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);">
+        <div class="kpi"><div class="kpi-icon green">🟢</div><div><div class="kpi-val" id="f-moving">—</div><div class="kpi-label">Moving</div></div></div>
+        <div class="kpi"><div class="kpi-icon amber">🟡</div><div><div class="kpi-val" id="f-idle">—</div><div class="kpi-label">Idle</div></div></div>
+        <div class="kpi"><div class="kpi-icon" style="background:var(--surface2);">⚫</div><div><div class="kpi-val" id="f-stopped">—</div><div class="kpi-label">Stopped</div></div></div>
+        <div class="kpi"><div class="kpi-icon red">🔴</div><div><div class="kpi-val" id="f-alerts">2</div><div class="kpi-label">Active Alerts</div></div></div>
+        <div class="kpi"><div class="kpi-icon blue">📍</div><div><div class="kpi-val">20</div><div class="kpi-label">Total Fleet</div></div></div>
+      </div>
+      <div class="fleet-layout">
+        <div class="vlist" id="vlist"></div>
+        <div>
+          <div id="fleet-map" style="height:58%;border-radius:var(--radius);border:1px solid var(--border);"></div>
+          <div class="card fleet-detail" style="height:calc(42% - 14px);overflow-y:auto;">
+            <div class="card-head"><div class="card-title" id="vdetail-title">Select a vehicle</div></div>
+            <div class="card-body" id="vdetail-body">
+              <div style="color:var(--text3);font-size:13px;padding:8px 0;">Click any vehicle card or map marker to view details.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALLS -->
+    <div class="page" id="page-halls">
+      <div class="hall-hero" id="hall-hero"></div>
+      <div class="hall-layout">
+        <div>
+          <div class="cal-container">
+            <div class="cal-header">
+              <button class="cal-nav" onclick="calNav(-1)">←</button>
+              <div class="cal-month" id="cal-title"></div>
+              <button class="cal-nav" onclick="calNav(1)">→</button>
+            </div>
+            <div class="cal-days-head">
+              <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div style="display:flex;gap:16px;margin-top:14px;font-size:11px;color:var(--text3);">
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--red-l);border:1px solid var(--red);display:inline-block"></span>Booked</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent-l);border:1px solid var(--accent);display:inline-block"></span>Today</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--green-l);border:1px solid var(--green);display:inline-block"></span>Selected</span>
+            </div>
+          </div>
+          <div class="card mt">
+            <div class="card-head">
+              <div class="card-title">All Bookings</div>
+              <button class="topbar-btn" onclick="downloadPDF()" style="font-size:11px;padding:5px 10px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Hall</th><th>Date</th><th>Event</th><th>Slot</th><th>Contact</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="btable"></tbody></table>
+            </div>
+          </div>
+        </div>
+        <div class="booking-sidebar">
+          <div class="booking-form">
+            <div class="card-head" style="padding:0 0 12px;border-bottom:1px solid var(--border);margin-bottom:14px;">
+              <div class="card-title">New Booking</div>
+              <span class="pill pill-blue">6-Month Horizon</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hall</label>
+              <select class="form-control" id="f-hall">
+                <option value="">Choose hall…</option>
+                <option>Jinnah Hall</option><option>Ayub Hall</option>
+                <option>Liaquat Hall</option><option>Quaid Hall</option><option>Fatima Hall</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" id="f-date"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Event Name</label>
+              <input type="text" class="form-control" id="f-event" placeholder="e.g. Wedding Reception"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact</label>
+              <input type="text" class="form-control" id="f-contact" placeholder="Name & phone"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Time Slot</label>
+              <select class="form-control" id="f-slot">
+                <option>Morning (08:00–13:00)</option>
+                <option>Afternoon (13:00–18:00)</option>
+                <option>Evening (18:00–23:00)</option>
+                <option>Full Day</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="doBooking()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+              Confirm Booking
+            </button>
+          </div>
+
+          <!-- Hall quick info -->
+          <div class="card" id="hall-info-card">
+            <div class="card-head"><div class="card-title" id="hinfo-title">Hall Details</div></div>
+            <div class="card-body" id="hinfo-body">
+              <div style="color:var(--text3);font-size:12px;">Select a hall above to see details</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="report-tabs">
+        <button class="rtab active" onclick="showRep('speed',this)">Speed Violations</button>
+        <button class="rtab" onclick="showRep('distance',this)">Daily Distance</button>
+        <button class="rtab" onclick="showRep('hours',this)">Working Hours</button>
+        <button class="rtab" onclick="showRep('fleet',this)">Fleet Summary</button>
+      </div>
+      <div class="report-grid">
+        <div class="chart-box"><div class="card-title mb" id="r-title1">Speed Violations — 7 Days</div><div class="chart-canvas"><canvas id="rc1"></canvas></div></div>
+        <div class="chart-box"><div class="card-title mb" id="r-title2">By Vehicle</div><div class="chart-canvas"><canvas id="rc2"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-head"><div class="card-title">Report Data</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Vehicle</th><th>Date</th><th>Metric</th><th>Value</th><th>Status</th></tr></thead><tbody id="rtable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-icon red">🆘</div><div><div class="kpi-val">1</div><div class="kpi-label">SOS Alerts</div></div></div>
+        <div class="kpi"><div class="kpi-icon amber">⚡</div><div><div class="kpi-val">6</div><div class="kpi-label">Speed Violations</div></div></div>
+        <div class="kpi"><div class="kpi-icon blue">📡</div><div><div class="kpi-val">3</div><div class="kpi-label">Geofence Events</div></div></div>
+        <div class="kpi"><div class="kpi-icon green">ℹ️</div><div><div class="kpi-val">12</div><div class="kpi-label">Info Events</div></div></div>
+      </div>
+      <div class="alert-feed" id="alert-feed"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CUSTOMIZER PANEL -->
+<div id="customizer">
+  <div class="cust-head">
+    <div class="cust-head-row">
+      <div class="cust-head-title">⚙ Customizer</div>
+      <div class="cust-close" onclick="closeCustomizer()">✕</div>
+    </div>
+    <div class="cust-tabs">
+      <div class="cust-tab active" onclick="custTab('design',this)">🎨 Design</div>
+      <div class="cust-tab" onclick="custTab('layout',this)">📐 Layout</div>
+      <div class="cust-tab" onclick="custTab('halls',this)">🏛 Halls</div>
+    </div>
+  </div>
+
+  <!-- TAB: DESIGN -->
+  <div class="cust-panel active" id="cpanel-design">
+    <div class="cust-section">
+      <div class="cust-section-title">Accent Color</div>
+      <div class="color-presets" id="color-presets">
+        <div class="color-swatch active" data-acc="#2563eb" style="background:#2563eb" onclick="setAccent('#2563eb','#1d4ed8','#eff6ff','37,99,235',this)"></div>
+        <div class="color-swatch" data-acc="#16a34a" style="background:#16a34a" onclick="setAccent('#16a34a','#15803d','#f0fdf4','22,163,74',this)"></div>
+        <div class="color-swatch" data-acc="#7c3aed" style="background:#7c3aed" onclick="setAccent('#7c3aed','#6d28d9','#f5f3ff','124,58,237',this)"></div>
+        <div class="color-swatch" data-acc="#dc2626" style="background:#dc2626" onclick="setAccent('#dc2626','#b91c1c','#fef2f2','220,38,38',this)"></div>
+        <div class="color-swatch" data-acc="#0891b2" style="background:#0891b2" onclick="setAccent('#0891b2','#0e7490','#ecfeff','8,145,178',this)"></div>
+        <div class="color-swatch" data-acc="#ea580c" style="background:#ea580c" onclick="setAccent('#ea580c','#c2410c','#fff7ed','234,88,12',this)"></div>
+        <div class="color-swatch" data-acc="#0f172a" style="background:#0f172a" onclick="setAccent('#0f172a','#1e293b','#f1f5f9','15,23,42',this)"></div>
+        <div class="color-swatch" data-acc="#059669" style="background:#059669" onclick="setAccent('#059669','#047857','#ecfdf5','5,150,105',this)"></div>
+      </div>
+      <div class="color-swatch-custom" style="margin-top:8px;">
+        <label>Custom:</label>
+        <input type="color" id="custom-color" value="#2563eb" oninput="customAccent(this.value)"/>
+        <span style="font-size:11px;color:var(--text3)" id="hex-display">#2563eb</span>
+      </div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Theme</div>
+      <div class="toggle-group" id="tg-theme">
+        <div class="toggle-opt active" data-val="light" onclick="setTheme('light',this)">☀ Light</div>
+        <div class="toggle-opt" data-val="dark" onclick="setTheme('dark',this)">🌙 Dark</div>
+      </div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Font Style</div>
+      <div style="display:flex;flex-direction:column;gap:5px;" id="font-opts">
+        <div class="toggle-opt active" data-val="syne-dm" onclick="setFont('syne-dm',this)" style="text-align:left;font-family:'Syne',sans-serif;font-size:12px">Syne + DM Sans <span style="float:right;opacity:.4">Default</span></div>
+        <div class="toggle-opt" data-val="playfair-lato" onclick="setFont('playfair-lato',this)" style="text-align:left;font-family:'Playfair Display',serif;font-size:12px">Playfair + Lato <span style="float:right;opacity:.4">Elegant</span></div>
+        <div class="toggle-opt" data-val="raleway-nunito" onclick="setFont('raleway-nunito',this)" style="text-align:left;font-family:'Raleway',sans-serif;font-size:12px">Raleway + Nunito <span style="float:right;opacity:.4">Modern</span></div>
+        <div class="toggle-opt" data-val="bebas-lato" onclick="setFont('bebas-lato',this)" style="text-align:left;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:12px">Bebas Neue + Lato <span style="float:right;opacity:.4">Bold</span></div>
+        <div class="toggle-opt" data-val="space-dm" onclick="setFont('space-dm',this)" style="text-align:left;font-family:'Space Grotesk',sans-serif;font-size:12px">Space Grotesk + DM <span style="float:right;opacity:.4">Tech</span></div>
+      </div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Map Tile</div>
+      <div style="display:flex;flex-direction:column;gap:5px;" id="tile-opts">
+        <div class="toggle-opt active" data-val="osm" onclick="setTile('osm',this)" style="font-size:11px;text-align:left">🗺 OpenStreetMap <span style="float:right;opacity:.4">Standard</span></div>
+        <div class="toggle-opt" data-val="carto-light" onclick="setTile('carto-light',this)" style="font-size:11px;text-align:left">⬜ CartoDB Light <span style="float:right;opacity:.4">Clean</span></div>
+        <div class="toggle-opt" data-val="carto-dark" onclick="setTile('carto-dark',this)" style="font-size:11px;text-align:left">⬛ CartoDB Dark <span style="float:right;opacity:.4">Night</span></div>
+        <div class="toggle-opt" data-val="esri" onclick="setTile('esri',this)" style="font-size:11px;text-align:left">🛰 ESRI Satellite <span style="float:right;opacity:.4">Aerial</span></div>
+        <div class="toggle-opt" data-val="toner" onclick="setTile('toner',this)" style="font-size:11px;text-align:left">◐ Stadia Toner <span style="float:right;opacity:.4">Minimal</span></div>
+      </div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Icon Style</div>
+      <div class="toggle-group" id="tg-icons">
+        <div class="toggle-opt active" data-val="emoji" onclick="setIcons('emoji',this)">😊 Emoji</div>
+        <div class="toggle-opt" data-val="minimal" onclick="setIcons('minimal',this)">◆ Minimal</div>
+        <div class="toggle-opt" data-val="outlined" onclick="setIcons('outlined',this)">○ Outlined</div>
+      </div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Sidebar Position</div>
+      <div class="toggle-group" id="tg-sidebar">
+        <div class="toggle-opt active" data-val="left" onclick="setSidebar('left',this)">← Left</div>
+        <div class="toggle-opt" data-val="right" onclick="setSidebar('right',this)">Right →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: LAYOUT -->
+  <div class="cust-panel" id="cpanel-layout">
+    <div class="cust-section">
+      <div class="cust-section-title">Spacing &amp; Shape</div>
+      <div class="cust-row"><div class="cust-label">Border Radius <span id="rv-radius">12px</span></div>
+        <div class="range-row"><input type="range" min="0" max="24" value="12" id="radius-range" oninput="setRadius(this.value)"/></div>
+        <div class="range-labels"><span>Sharp</span><span>Pill</span></div></div>
+      <div class="cust-row"><div class="cust-label">Card Gap <span id="rv-gap">16px</span></div>
+        <div class="range-row"><input type="range" min="6" max="32" value="16" id="gap-range" oninput="setVar('--card-gap',this.value+'px','rv-gap')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Content Padding <span id="rv-cpad">20px</span></div>
+        <div class="range-row"><input type="range" min="8" max="40" value="20" id="cpad-range" oninput="setVar('--content-pad',this.value+'px','rv-cpad')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Topbar Height <span id="rv-topbar">56px</span></div>
+        <div class="range-row"><input type="range" min="40" max="72" value="56" id="topbar-range" oninput="setVar('--topbar-h',this.value+'px','rv-topbar')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Sidebar Width <span id="rv-sbw">252px</span></div>
+        <div class="range-row"><input type="range" min="180" max="320" value="252" id="sbw-range" oninput="setSidebarWidth(this.value)"/></div>
+        <div class="range-labels"><span>Narrow</span><span>Wide</span></div></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">KPI Cards</div>
+      <div class="cust-row"><div class="cust-label">Icon Size <span id="rv-kpi-icon">40px</span></div>
+        <div class="range-row"><input type="range" min="24" max="64" value="40" id="kpi-icon-range" oninput="setVar('--kpi-icon-sz',this.value+'px','rv-kpi-icon')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Value Font <span id="rv-kpi-val">28px</span></div>
+        <div class="range-row"><input type="range" min="18" max="48" value="28" id="kpi-val-range" oninput="setVar('--kpi-val-sz',this.value+'px','rv-kpi-val')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Label Font <span id="rv-kpi-label">12px</span></div>
+        <div class="range-row"><input type="range" min="9" max="16" value="12" id="kpi-label-range" oninput="setVar('--kpi-label-sz',this.value+'px','rv-kpi-label')"/></div></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Cards &amp; Tables</div>
+      <div class="cust-row"><div class="cust-label">Card Title Size <span id="rv-ctitle">14px</span></div>
+        <div class="range-row"><input type="range" min="10" max="20" value="14" id="ctitle-range" oninput="setVar('--card-title-sz',this.value+'px','rv-ctitle')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Card Head Pad <span id="rv-cpad2">14px</span></div>
+        <div class="range-row"><input type="range" min="8" max="24" value="14" id="cpad2-range" oninput="setVar('--card-pad',this.value+'px','rv-cpad2')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Table Font <span id="rv-tfont">13px</span></div>
+        <div class="range-row"><input type="range" min="10" max="17" value="13" id="tfont-range" oninput="setVar('--table-font-sz',this.value+'px','rv-tfont')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Table Cell Pad <span id="rv-tpad">11px</span></div>
+        <div class="range-row"><input type="range" min="4" max="20" value="11" id="tpad-range" oninput="setVar('--table-pad',this.value+'px','rv-tpad')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Table Header Font <span id="rv-thfont">10px</span></div>
+        <div class="range-row"><input type="range" min="8" max="14" value="10" id="thfont-range" oninput="setVar('--th-font-sz',this.value+'px','rv-thfont')"/></div></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Navigation &amp; Global</div>
+      <div class="cust-row"><div class="cust-label">Nav Font <span id="rv-navfont">13px</span></div>
+        <div class="range-row"><input type="range" min="10" max="17" value="13" id="navfont-range" oninput="setVar('--nav-font-sz',this.value+'px','rv-navfont')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Global Font Scale <span id="rv-fscale">14px</span></div>
+        <div class="range-row"><input type="range" min="11" max="18" value="14" id="fscale-range" oninput="setVar('--font-scale',this.value+'px','rv-fscale')"/></div></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Form Fields</div>
+      <div class="cust-row"><div class="cust-label">Label Font <span id="rv-flabel">11px</span></div>
+        <div class="range-row"><input type="range" min="9" max="15" value="11" id="flabel-range" oninput="setVar('--form-label-sz',this.value+'px','rv-flabel')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Input Font <span id="rv-finput">13px</span></div>
+        <div class="range-row"><input type="range" min="10" max="17" value="13" id="finput-range" oninput="setVar('--form-input-sz',this.value+'px','rv-finput')"/></div></div>
+      <div class="cust-row"><div class="cust-label">Input Padding <span id="rv-fpad">9px</span></div>
+        <div class="range-row"><input type="range" min="5" max="16" value="9" id="fpad-range" oninput="setVar('--form-input-pad',this.value+'px','rv-fpad')"/></div></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Alerts</div>
+      <div class="cust-row"><div class="cust-label">Alert Font <span id="rv-afont">13px</span></div>
+        <div class="range-row"><input type="range" min="10" max="17" value="13" id="afont-range" oninput="setVar('--alert-font-sz',this.value+'px','rv-afont')"/></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: HALLS -->
+  <div class="cust-panel" id="cpanel-halls">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Select hall → choose background → adjust appearance.</div>
+    <div class="hall-sel-tabs" id="hall-sel-tabs">
+      <div class="hall-sel-tab active" data-hi="0" onclick="hallImgTab(0,this)">Jinnah</div>
+      <div class="hall-sel-tab" data-hi="1" onclick="hallImgTab(1,this)">Ayub</div>
+      <div class="hall-sel-tab" data-hi="2" onclick="hallImgTab(2,this)">Liaquat</div>
+      <div class="hall-sel-tab" data-hi="3" onclick="hallImgTab(3,this)">Quaid</div>
+      <div class="hall-sel-tab" data-hi="4" onclick="hallImgTab(4,this)">Fatima</div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Background</div>
+      <div class="hall-img-grid" id="hall-img-grid"></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Hall Card Height <span id="rv-hallh">160px</span></div>
+      <div class="range-row"><input type="range" min="100" max="260" value="160" id="hallh-range" oninput="setVar('--hall-hero-h',this.value+'px','rv-hallh');renderHallHero()"/></div>
+      <div class="range-labels"><span>Short</span><span>Tall</span></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Hall Name Font <span id="rv-hallname">16px</span></div>
+      <div class="range-row"><input type="range" min="11" max="28" value="16" id="hallname-range" oninput="setVar('--hall-name-sz',this.value+'px','rv-hallname');renderHallHero()"/></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Overlay Darkness <span id="rv-overlay">75%</span></div>
+      <div class="range-row"><input type="range" min="20" max="95" value="75" id="overlay-range" oninput="setOverlay(this.value)"/></div>
+      <div class="range-labels"><span>Lighter</span><span>Darker</span></div>
+    </div>
+    <div class="cust-section">
+      <div class="cust-section-title">Caption Font <span id="rv-hallcap">11px</span></div>
+      <div class="range-row"><input type="range" min="8" max="16" value="11" id="hallcap-range" oninput="setVar('--hall-cap-sz',this.value+'px','rv-hallcap');renderHallHero()"/></div>
+    </div>
+  </div>
+
+  <div class="cust-footer">
+    <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="saveDesignSettings()">💾 Save All Settings</button>
+    <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="resetCustomizer()">↺ Reset to Defaults</button>
+    <button class="btn" style="width:100%;background:var(--red-l);color:var(--red);font-size:11px;" onclick="clearAllBookings()">🗑 Clear All Bookings</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">✓</div>
+    <div class="modal-title">Booking Confirmed</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="closeModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT BOOKING MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal" style="width:460px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div>
+        <div class="modal-title" style="margin-bottom:2px;">Edit Booking</div>
+        <div style="font-size:11px;color:var(--text3)" id="edit-booking-id"></div>
+      </div>
+      <div style="width:44px;height:44px;border-radius:10px;background:var(--blue-l);display:flex;align-items:center;justify-content:center;font-size:22px;">✏️</div>
+    </div>
+    <input type="hidden" id="edit-idx"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Hall</label>
+        <select class="form-control" id="edit-hall">
+          <option>Jinnah Hall</option><option>Ayub Hall</option>
+          <option>Liaquat Hall</option><option>Quaid Hall</option><option>Fatima Hall</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-control" id="edit-date"/>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px;">
+      <label class="form-label">Event Name</label>
+      <input type="text" class="form-control" id="edit-event"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contact</label>
+      <input type="text" class="form-control" id="edit-contact"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Time Slot</label>
+      <select class="form-control" id="edit-slot">
+        <option>Morning (08:00–13:00)</option>
+        <option>Afternoon (13:00–18:00)</option>
+        <option>Evening (18:00–23:00)</option>
+        <option>Full Day</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-control" id="edit-status">
+        <option value="confirmed">Confirmed</option>
+        <option value="pending">Pending</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="modal-actions" style="margin-top:6px;">
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditBooking()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA
+══════════════════════════════════════════ */
+const HALL_IMAGES = [
+  // Gradient fallbacks + photo options (dark Unsplash images)
+  {key:'grad',     label:'Gradient',   bg:'linear-gradient(135deg,#1e3a5f,#2563eb,#0ea5e9)'},
+  {key:'img-banquet', label:'Banquet',    bg:'url(https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80)'},
+  {key:'img-hall2',   label:'Ballroom',   bg:'url(https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&q=80)'},
+  {key:'img-conf',    label:'Conference', bg:'url(https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80)'},
+  {key:'img-award',   label:'Award',      bg:'url(https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&q=80)'},
+  {key:'img-dark1',   label:'Dark Hall',  bg:'url(https://images.unsplash.com/photo-1551818255-e6e10975bc17?w=600&q=80)'},
+  {key:'img-event',   label:'Event',      bg:'url(https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&q=80)'},
+  {key:'img-lawn',    label:'Lawn',       bg:'url(https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=600&q=80)'},
+  {key:'img-stage',   label:'Stage',      bg:'url(https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&q=80)'},
+];
+
+// Per-hall selected background (persisted)
+let hallBgs = JSON.parse(localStorage.getItem('cantt_hall_bgs')||'null') || [
+  'grad','linear-gradient(135deg,#78350f,#d97706,#fbbf24)',
+  'linear-gradient(135deg,#14532d,#16a34a,#4ade80)',
+  'linear-gradient(135deg,#3b0764,#7c3aed,#a78bfa)',
+  'linear-gradient(135deg,#881337,#e11d48,#fb7185)'
+];
+// Normalize: if array has old gradient strings, rebuild as keys
+if(typeof hallBgs[0]==='string' && !HALL_IMAGES.find(i=>i.key===hallBgs[0])){
+  hallBgs=['grad','grad','grad','grad','grad'];
+}
+function saveHallBgs(){try{localStorage.setItem('cantt_hall_bgs',JSON.stringify(hallBgs));}catch(e){}}
+function getHallBg(i){
+  const entry=HALL_IMAGES.find(im=>im.key===hallBgs[i]);
+  if(entry) return entry.bg;
+  // Fallback gradients per hall
+  const grads=['linear-gradient(135deg,#1e3a5f,#2563eb,#0ea5e9)',
+    'linear-gradient(135deg,#78350f,#d97706,#fbbf24)',
+    'linear-gradient(135deg,#14532d,#16a34a,#4ade80)',
+    'linear-gradient(135deg,#3b0764,#7c3aed,#a78bfa)',
+    'linear-gradient(135deg,#881337,#e11d48,#fb7185)'];
+  return grads[i]||grads[0];
+}
+
+const HALLS = [
+  {name:'Jinnah Hall',  cap:800, icon:'🏛', events:['Regimental Dinner','Officers Mess Night']},
+  {name:'Ayub Hall',    cap:600, icon:'🎪', events:['Award Ceremony']},
+  {name:'Liaquat Hall', cap:500, icon:'🏟', events:['Graduation Ceremony','Sports Night']},
+  {name:'Quaid Hall',   cap:400, icon:'🎭', events:['Corporate Conference']},
+  {name:'Fatima Hall',  cap:300, icon:'✨', events:[]},
+];
+
+// ── Bookings: fully persistent via localStorage, start empty on first visit ──
+function loadBookings(){
+  try {
+    const saved = localStorage.getItem('cantt_bookings');
+    if(saved !== null){
+      const parsed = JSON.parse(saved);
+      if(Array.isArray(parsed)) return parsed;
+    }
+  } catch(e){}
+  return []; // fresh start — no demo data
+}
+function saveBookings(arr){
+  try { localStorage.setItem('cantt_bookings', JSON.stringify(arr !== undefined ? arr : bookings)); } catch(e){}
+}
+
+let bookings = loadBookings();
+
+const ALERTS=[
+  {type:'red',icon:'🆘',title:'SOS Alert — V-007 emergency button activated',meta:'Sector G-8 Rawalpindi Cantt',time:'14:32'},
+  {type:'amber',icon:'⚡',title:'Speed Violation — V-003 recorded 112 km/h (limit 80)',meta:'Mall Road · Moving',time:'14:29'},
+  {type:'amber',icon:'⚡',title:'Speed Violation — V-015 recorded 95 km/h',meta:'Airport Road · Moving',time:'14:26'},
+  {type:'blue',icon:'📡',title:'Geofence Alert — V-011 exited Cantt Zone',meta:'Westridge boundary',time:'14:23'},
+  {type:'amber',icon:'🔶',title:'Harsh Braking — V-008 event detected',meta:'Committee Chowk',time:'14:19'},
+  {type:'green',icon:'🔑',title:'Engine On — V-002 ignition started',meta:'HQ Compound',time:'14:16'},
+  {type:'blue',icon:'📍',title:'Geofence Enter — V-014 entered Chaklala Garrison',meta:'Chaklala Zone',time:'14:12'},
+  {type:'amber',icon:'🔋',title:'Power Loss — V-019 battery tamper detected',meta:'Saddar Rawalpindi',time:'14:06'},
+  {type:'amber',icon:'⏱',title:'Idle Alert — V-006 idle for 25 minutes',meta:'Lalkurti',time:'14:02'},
+  {type:'green',icon:'✅',title:'Route Restored — V-009 back on designated route',meta:'GT Road',time:'13:54'},
+];
+
+const CANTT = [33.7833, 72.7500]; // Wah Cantonment, Attock District
+const VIDS = Array.from({length:20},(_,i)=>'V-'+String(i+1).padStart(3,'0'));
+const VTYPES = ['Sedan','SUV','Pickup','Van','Jeep','Bus','Sedan','SUV','Pickup','Van','Jeep','Sedan','SUV','Bus','Pickup','Van','Sedan','SUV','Jeep','Pickup'];
+const DRIVERS = ['Lt. Ahmed','Capt. Raza','Sgt. Khan','Pvt. Ali','Cpl. Hamid','Lt. Saeed','Capt. Malik','Sgt. Shah','Pvt. Iqbal','Cpl. Baig',
+  'Lt. Farooq','Capt. Javed','Sgt. Noor','Pvt. Rashid','Cpl. Tariq','Lt. Wasim','Capt. Zafar','Sgt. Adil','Pvt. Sabir','Cpl. Tahir'];
+
+let vehicles = VIDS.map((id,i)=>({
+  id, type:VTYPES[i], driver:DRIVERS[i],
+  lat: CANTT[0]+(Math.random()-.5)*.06,
+  lng: CANTT[1]+(Math.random()-.5)*.06,
+  speed:0, status:'stopped',
+  heading:Math.random()*360,
+  fuel:Math.floor(Math.random()*75+20)+'%',
+  odo:(Math.random()*90000+5000).toFixed(0),
+}));
+vehicles.forEach((v,i)=>{
+  if(i<12){v.status='moving';v.speed=Math.floor(Math.random()*70+10);}
+  else if(i<17){v.status='idle';}
+  else{v.status='stopped';}
+});
+
+/* ══════════════════════════════════════════
+   CLOCK
+══════════════════════════════════════════ */
+function tick(){
+  const n=new Date();
+  document.getElementById('livetime').textContent=
+    n.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+
+    ' · '+n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(tick,1000);tick();
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+const TITLES={dashboard:'Dashboard',fleet:'Fleet Tracking',halls:'Hall Booking',reports:'Reports',alerts:'Alerts & Events'};
+function goPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('ptitle').textContent=TITLES[id]||id;
+  if(id==='fleet'&&!window._mapReady) setTimeout(initMap,50);
+  if(id==='reports') setTimeout(()=>showRep('speed',document.querySelector('.rtab')),50);
+  if(id==='halls'){renderHallHero();renderCal();}
+  if(id==='alerts') renderAlerts();
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
+function renderDash(){
+  const moving=vehicles.filter(v=>v.status==='moving').length;
+  document.getElementById('kpi-moving').textContent=moving;
+  document.getElementById('kpi-moving-sub').textContent=`${vehicles.filter(v=>v.status==='idle').length} idle, ${vehicles.filter(v=>v.status==='stopped').length} stopped`;
+  document.getElementById('f-moving').textContent=moving;
+  document.getElementById('f-idle').textContent=vehicles.filter(v=>v.status==='idle').length;
+  document.getElementById('f-stopped').textContent=vehicles.filter(v=>v.status==='stopped').length;
+
+  const td=todayStr();
+  const dhEl=document.getElementById('dash-halls');
+  if(dhEl) dhEl.innerHTML=HALLS.map(h=>{
+    const b=bookings.find(bk=>bk.hall===h.name&&bk.date===td&&bk.status!=='cancelled');
+    return `<tr><td><span style="margin-right:4px">${h.icon}</span>${h.name}</td><td>${h.cap.toLocaleString()}</td>
+    <td style="color:var(--text)">${b?b.event:'—'}</td>
+    <td>${b?`<span class="pill pill-green">Booked</span>`:`<span class="pill pill-gray">Free</span>`}</td></tr>`;
+  }).join('');
+
+  const dfEl=document.getElementById('dash-fleet');
+  if(dfEl) dfEl.innerHTML=vehicles.slice(0,8).map(v=>{
+    const cls=v.status==='moving'?'pill-green':v.status==='idle'?'pill-amber':'pill-gray';
+    return `<tr><td style="font-weight:600">${v.id}</td><td style="color:var(--text2)">${v.driver}</td>
+    <td>${v.speed.toFixed(0)} km/h</td><td><span class="pill ${cls}">${v.status}</span></td></tr>`;
+  }).join('');
+
+  const daEl=document.getElementById('dash-alerts');
+  if(daEl) daEl.innerHTML=ALERTS.slice(0,4).map(a=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:11px var(--density);border-bottom:1px solid var(--border);">
+      <div style="font-size:18px">${a.icon}</div>
+      <div><div style="font-size:13px;font-weight:500">${a.title}</div><div style="font-size:11px;color:var(--text3)">${a.meta}</div></div>
+      <div style="margin-left:auto;font-size:11px;color:var(--text3)">${a.time}</div>
+    </div>`).join('');
+}
+renderDash();
+setInterval(()=>{
+  vehicles.forEach((v,i)=>{
+    if(v.status==='moving'){
+      const r=v.heading*Math.PI/180;
+      v.lat+=Math.cos(r)*.00015+(Math.random()-.5)*.0001;
+      v.lng+=Math.sin(r)*.00015+(Math.random()-.5)*.0001;
+      v.heading+=(Math.random()-.5)*15;
+      v.speed=Math.max(5,Math.min(110,v.speed+(Math.random()-.5)*8));
+    }
+    if(window._mapReady&&markers[v.id]){
+      markers[v.id].setLatLng([v.lat,v.lng]);
+      markers[v.id].setIcon(vIcon(v));
+    }
+  });
+  renderDash();
+  renderVlist();
+  if(selVehicle) renderVDetail(selVehicle);
+},2000);
+
+/* ══════════════════════════════════════════
+   FLEET MAP
+══════════════════════════════════════════ */
+let map,markers={},selVehicle=null;
+
+function vIcon(v){
+  const c=v.status==='moving'?'#16a34a':v.status==='idle'?'#d97706':'#94a3b8';
+  return L.divIcon({className:'',iconSize:[14,14],iconAnchor:[7,7],html:
+    `<div style="width:14px;height:14px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 0 8px ${c}99;transition:all .3s;"></div>`});
+}
+
+function initMap(){
+  window._mapReady=true;
+  map=L.map('fleet-map',{zoomControl:true,attributionControl:false}).setView(CANTT,14);
+  const tileKey=window._pendingTile||'osm';
+  const t=TILES[tileKey]||TILES['osm'];
+  currentTileLayer=L.tileLayer(t.url,{maxZoom:19}).addTo(map);
+  vehicles.forEach(v=>{
+    const m=L.marker([v.lat,v.lng],{icon:vIcon(v)}).addTo(map);
+    m.bindPopup(()=>`<div class="vmap-popup">
+      <div class="vmp-name">${v.id} — ${v.type}</div>
+      <div class="vmp-row"><span class="vmp-k">Status</span><span style="font-weight:600">${v.status}</span></div>
+      <div class="vmp-row"><span class="vmp-k">Speed</span><span>${v.speed.toFixed(0)} km/h</span></div>
+      <div class="vmp-row"><span class="vmp-k">Driver</span><span>${v.driver}</span></div>
+      <div class="vmp-row"><span class="vmp-k">Fuel</span><span>${v.fuel}</span></div>
+    </div>`);
+    m.on('click',()=>selectV(v.id));
+    markers[v.id]=m;
+  });
+  renderVlist();
+}
+
+function renderVlist(){
+  const el=document.getElementById('vlist');
+  if(!el)return;
+  el.innerHTML=vehicles.map(v=>{
+    const sc=v.status==='moving'?'#16a34a':v.status==='idle'?'#d97706':'#94a3b8';
+    const sl=v.status==='moving'?'pill-green':v.status==='idle'?'pill-amber':'pill-gray';
+    return `<div class="v-card${selVehicle===v.id?' sel':''}" onclick="selectV('${v.id}')">
+      <div class="v-card-top">
+        <div class="v-avatar">${v.id.slice(2)}</div>
+        <div><div class="v-name">${v.id}</div><div class="v-type">${v.type} · ${v.driver}</div></div>
+        <div class="v-status"><div class="v-status-dot" style="background:${sc}"></div><span class="pill ${sl}" style="margin:0">${v.status}</span></div>
+      </div>
+      <div class="v-metrics">
+        <div class="v-metric"><div class="v-metric-val">${v.speed.toFixed(0)}</div><div class="v-metric-key">km/h</div></div>
+        <div class="v-metric"><div class="v-metric-val">${v.fuel}</div><div class="v-metric-key">Fuel</div></div>
+        <div class="v-metric"><div class="v-metric-val">${Number(v.odo).toLocaleString()}</div><div class="v-metric-key">km odo</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectV(id){
+  selVehicle=id;
+  if(window._mapReady){map.setView([vehicles.find(v=>v.id===id).lat,vehicles.find(v=>v.id===id).lng],15);markers[id].openPopup();}
+  renderVlist();renderVDetail(id);
+}
+
+function renderVDetail(id){
+  const v=vehicles.find(x=>x.id===id);
+  if(!v)return;
+  document.getElementById('vdetail-title').textContent=`${v.id} — ${v.type}`;
+  const sc=v.status==='moving'?'var(--green)':v.status==='idle'?'var(--amber)':'var(--text3)';
+  const sl=v.status==='moving'?'pill-green':v.status==='idle'?'pill-amber':'pill-gray';
+  document.getElementById('vdetail-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span class="pill ${sl}">${v.status.toUpperCase()}</span>
+      <span style="font-size:12px;color:var(--text2)">${v.driver}</span>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-key">Speed</div><div class="detail-val" style="color:${sc}">${v.speed.toFixed(0)} km/h</div></div>
+      <div class="detail-item"><div class="detail-key">Fuel Level</div><div class="detail-val">${v.fuel}</div></div>
+      <div class="detail-item"><div class="detail-key">Odometer</div><div class="detail-val">${Number(v.odo).toLocaleString()} km</div></div>
+      <div class="detail-item"><div class="detail-key">Heading</div><div class="detail-val">${v.heading.toFixed(0)}°</div></div>
+      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Coordinates</div><div class="detail-val" style="font-size:12px">${v.lat.toFixed(5)}°N, ${v.lng.toFixed(5)}°E</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-ghost" style="flex:1;font-size:12px" onclick="alert('History playback for ${v.id}')">▶ History</button>
+      <button class="btn btn-ghost" style="flex:1;font-size:12px" onclick="alert('Immobilise command sent to ${v.id}')">⊗ Immobilise</button>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════
+   HALLS
+══════════════════════════════════════════ */
+let selHall=0, calYear=new Date().getFullYear(), calMonth=new Date().getMonth(), selDate=null;
+
+function renderHallHero(){
+  document.getElementById('hall-hero').innerHTML=HALLS.map((h,i)=>{
+    const bcount=bookings.filter(b=>b.hall===h.name&&b.status!=='cancelled').length;
+    const bg=getHallBg(i);
+    const bgStyle=bg.startsWith('url(')
+      ?`background-image:${bg};background-size:cover;background-position:center;`
+      :`background:${bg};`;
+    return `<div class="hall-hero-card${i===selHall?' active':''}" onclick="selectHall(${i})">
+      <div class="hall-bg" style="${bgStyle}"></div>
+      <div class="hall-overlay"></div>
+      <div class="hall-avail">
+        <span class="pill" style="background:rgba(0,0,0,.45);color:#fff;backdrop-filter:blur(8px)">${bcount} booked</span>
+      </div>
+      <div class="hall-content">
+        <div class="hall-hname">${h.name}</div>
+        <div class="hall-hcap">${h.icon} Capacity ${h.cap.toLocaleString()}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectHall(i){
+  selHall=i;
+  document.getElementById('f-hall').value=HALLS[i].name;
+  renderHallHero();renderCal();
+  const h=HALLS[i];
+  document.getElementById('hinfo-title').textContent=h.name;
+  document.getElementById('hinfo-body').innerHTML=`
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-key">Capacity</div><div class="detail-val">${h.cap.toLocaleString()}</div></div>
+      <div class="detail-item"><div class="detail-key">Bookings</div><div class="detail-val">${bookings.filter(b=>b.hall===h.name&&b.status!=='cancelled').length}</div></div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text3)">Upcoming: ${h.events.length?h.events.join(', '):'None scheduled'}</div>`;
+}
+
+function todayStr(){
+  const t=new Date();
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+
+function renderCal(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent=months[calMonth]+' '+calYear;
+  const hall=HALLS[selHall].name;
+  let html='';
+  const first=new Date(calYear,calMonth,1);
+  let dow=(first.getDay()+6)%7;
+  for(let i=0;i<dow;i++) html+=`<div class="cday empty"></div>`;
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const today=new Date();
+  for(let d=1;d<=dim;d++){
+    const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const booked=bookings.some(b=>b.hall===hall&&b.date===ds&&b.status!=='cancelled');
+    const isToday=calYear===today.getFullYear()&&calMonth===today.getMonth()&&d===today.getDate();
+    const isPast=new Date(calYear,calMonth,d)<new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const isSel=selDate===ds;
+    let cls='cday';
+    if(isPast)cls+=' past';
+    else if(booked)cls+=' booked';
+    else if(isToday)cls+=' today';
+    if(isSel)cls+=' selected';
+    html+=`<div class="${cls}" onclick="${isPast||booked?'':'pickDate(\''+ds+'\')'}'">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  renderBTable();
+}
+
+function pickDate(ds){selDate=ds;document.getElementById('f-date').value=ds;renderCal();}
+function calNav(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+
+function renderBTable(){
+  if(bookings.length === 0){
+    document.getElementById('btable').innerHTML=`<tr><td colspan="7" style="text-align:center;padding:40px 14px;">
+      <div style="font-size:32px;margin-bottom:10px;">📅</div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:4px;">No bookings yet</div>
+      <div style="font-size:12px;color:var(--text3);">Use the form above to create your first booking.</div>
+    </td></tr>`;
+    return;
+  }
+  document.getElementById('btable').innerHTML=bookings.map((b,i)=>`<tr>
+    <td>${b.hall}</td><td>${b.date}</td>
+    <td style="font-weight:600;color:var(--text)">${b.event}</td>
+    <td style="font-size:11px">${b.slot}</td>
+    <td>${b.contact}</td>
+    <td><span class="pill ${b.status==='confirmed'?'pill-green':b.status==='pending'?'pill-amber':'pill-red'}">${b.status}</span></td>
+    <td style="display:flex;gap:5px;">
+      <button class="btn" style="padding:4px 8px;font-size:11px;background:var(--blue-l);color:var(--blue);" onclick="openEditModal(${i})">Edit</button>
+      <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="cancelB(${i})">Cancel</button>
+    </td>
+  </tr>`).join('');
+}
+
+function doBooking(){
+  const hall=document.getElementById('f-hall').value;
+  const date=document.getElementById('f-date').value;
+  const event=document.getElementById('f-event').value.trim();
+  const contact=document.getElementById('f-contact').value.trim();
+  const slot=document.getElementById('f-slot').value;
+  if(!hall||!date||!event||!contact){alert('Please complete all fields.');return;}
+  const conflict=bookings.find(b=>b.hall===hall&&b.date===date&&b.status!=='cancelled');
+  if(conflict){alert(`⚠ ${hall} is already booked on ${date} for: ${conflict.event}`);return;}
+  bookings.push({hall,date,event,slot,contact,status:'confirmed'});
+  saveBookings();
+  document.getElementById('modal-body').innerHTML=
+    `<strong style="color:var(--text)">${event}</strong><br>${hall}<br>${date} · ${slot}<br><br>
+    Contact: ${contact}<br><br>
+    <span style="color:var(--accent);font-size:12px">Booking ID: CNT-${Date.now().toString().slice(-6)}</span>`;
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('f-event').value='';document.getElementById('f-contact').value='';
+  renderCal();renderHallHero();renderDash();
+}
+function cancelB(i){if(confirm('Cancel this booking?')){bookings[i].status='cancelled';saveBookings();renderCal();renderHallHero();renderDash();}}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('f-date').valueAsDate=new Date();
+
+/* ══════════════════════════════════════════
+   ALERTS
+══════════════════════════════════════════ */
+function renderAlerts(){
+  document.getElementById('alert-feed').innerHTML=ALERTS.map(a=>{
+    const bg={red:'var(--red-l)',amber:'var(--amber-l)',blue:'var(--blue-l)',green:'var(--green-l)'}[a.type];
+    return `<div class="alert-row">
+      <div class="alert-icon" style="background:${bg};font-size:20px">${a.icon}</div>
+      <div><div class="alert-title">${a.title}</div><div class="alert-meta">${a.meta}</div></div>
+      <div class="alert-time">${a.time}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   REPORTS
+══════════════════════════════════════════ */
+let rc1,rc2;
+const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const vids8=VIDS.slice(0,8);
+const cOpts={
+  plugins:{legend:{labels:{color:'var(--text2)',font:{size:11,family:"'DM Sans'"}}}},
+  scales:{x:{ticks:{color:'var(--text3)',font:{size:10}},grid:{color:'var(--border)'}},
+          y:{ticks:{color:'var(--text3)',font:{size:10}},grid:{color:'var(--border)'}}}
+};
+
+function showRep(type,el){
+  document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(rc1)rc1.destroy();if(rc2)rc2.destroy();
+  const tbody=document.getElementById('rtable');
+  if(type==='speed'){
+    document.getElementById('r-title1').textContent='Speed Violations — Last 7 Days';
+    document.getElementById('r-title2').textContent='Violations by Vehicle';
+    rc1=new Chart(document.getElementById('rc1'),{type:'bar',data:{labels:days,datasets:[{label:'Violations',data:[2,1,3,0,2,1,2],backgroundColor:'rgba(220,38,38,.4)',borderColor:'#dc2626',borderWidth:1.5,borderRadius:4}]},options:cOpts});
+    rc2=new Chart(document.getElementById('rc2'),{type:'bar',data:{labels:vids8,datasets:[{label:'Count',data:[3,1,2,0,1,0,2,1],backgroundColor:'rgba(220,38,38,.3)',borderColor:'#dc2626',borderWidth:1.5,borderRadius:4}]},options:cOpts});
+    tbody.innerHTML=vehicles.filter((_,i)=>[3,1,2,0,1,0,2,1][i]>0).map(v=>`<tr><td>${v.id}</td><td>${todayStr()}</td><td>Max Speed</td><td style="color:var(--red);font-weight:600">${Math.floor(Math.random()*30+85)} km/h</td><td><span class="pill pill-red">Violation</span></td></tr>`).join('');
+  } else if(type==='distance'){
+    document.getElementById('r-title1').textContent='Daily Distance — Last 7 Days';
+    document.getElementById('r-title2').textContent='Distance by Vehicle (km)';
+    const kms=days.map(()=>Math.floor(Math.random()*300+100));
+    rc1=new Chart(document.getElementById('rc1'),{type:'line',data:{labels:days,datasets:[{label:'km',data:kms,borderColor:'var(--accent)',backgroundColor:'rgba(37,99,235,.1)',tension:.4,fill:true,pointRadius:4}]},options:cOpts});
+    const vkms=vids8.map(()=>Math.floor(Math.random()*80+20));
+    rc2=new Chart(document.getElementById('rc2'),{type:'bar',data:{labels:vids8,datasets:[{label:'km',data:vkms,backgroundColor:'rgba(37,99,235,.35)',borderColor:'var(--accent)',borderWidth:1.5,borderRadius:4}]},options:cOpts});
+    tbody.innerHTML=vids8.map((v,i)=>`<tr><td>${v}</td><td>${todayStr()}</td><td>Distance</td><td>${vkms[i]} km</td><td><span class="pill pill-green">Normal</span></td></tr>`).join('');
+  } else if(type==='hours'){
+    document.getElementById('r-title1').textContent='Working Hours — Last 7 Days';
+    document.getElementById('r-title2').textContent='Hours by Vehicle';
+    const hrs=days.map(()=>+(Math.random()*6+2).toFixed(1));
+    rc1=new Chart(document.getElementById('rc1'),{type:'bar',data:{labels:days,datasets:[{label:'Hours',data:hrs,backgroundColor:'rgba(8,145,178,.4)',borderColor:'#0891b2',borderWidth:1.5,borderRadius:4}]},options:cOpts});
+    const vhrs=vids8.map(()=>+(Math.random()*8+1).toFixed(1));
+    rc2=new Chart(document.getElementById('rc2'),{type:'bar',data:{labels:vids8,datasets:[{label:'Hours',data:vhrs,backgroundColor:'rgba(8,145,178,.3)',borderColor:'#0891b2',borderWidth:1.5,borderRadius:4}]},options:cOpts});
+    tbody.innerHTML=vids8.map((v,i)=>`<tr><td>${v}</td><td>${todayStr()}</td><td>Working Hours</td><td>${vhrs[i]} hrs</td><td><span class="pill ${vhrs[i]>7?'pill-green':'pill-amber'}">${vhrs[i]>7?'Full Shift':'Partial'}</span></td></tr>`).join('');
+  } else {
+    document.getElementById('r-title1').textContent='Fleet Status Distribution';
+    document.getElementById('r-title2').textContent='Alert Types This Week';
+    const m=vehicles.filter(v=>v.status==='moving').length;
+    const idle=vehicles.filter(v=>v.status==='idle').length;
+    const st=vehicles.filter(v=>v.status==='stopped').length;
+    rc1=new Chart(document.getElementById('rc1'),{type:'doughnut',data:{labels:['Moving','Idle','Stopped'],datasets:[{data:[m,idle,st],backgroundColor:['rgba(22,163,74,.7)','rgba(217,119,6,.7)','rgba(148,163,184,.7)'],borderColor:'var(--surface)',borderWidth:3}]},options:{plugins:{legend:{labels:{color:'var(--text2)',font:{size:11,family:"'DM Sans'"}}}}}});
+    rc2=new Chart(document.getElementById('rc2'),{type:'bar',data:{labels:['Speed','Harsh Brk','Idle','Geofence','SOS','Power'],datasets:[{label:'Events',data:[6,3,4,3,1,1],backgroundColor:'rgba(217,119,6,.4)',borderColor:'#d97706',borderWidth:1.5,borderRadius:4}]},options:cOpts});
+    tbody.innerHTML=vehicles.map(v=>`<tr><td>${v.id}</td><td>${todayStr()}</td><td>Status</td><td>${v.status}</td><td><span class="pill ${v.status==='moving'?'pill-green':v.status==='idle'?'pill-amber':'pill-gray'}">${v.status}</span></td></tr>`).join('');
+  }
+}
+
+/* ══════════════════════════════════════════
+   CUSTOMIZER — TAB SWITCHING
+══════════════════════════════════════════ */
+function custTab(id,el){
+  document.querySelectorAll('.cust-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.cust-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('cpanel-'+id).classList.add('active');
+  if(id==='halls') renderHallImgGrid(window._hallImgTabIdx||0);
+}
+
+/* Hall image tab */
+let _hallImgTabIdx=0;
+function hallImgTab(i,el){
+  _hallImgTabIdx=i;window._hallImgTabIdx=i;
+  document.querySelectorAll('.hall-sel-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderHallImgGrid(i);
+}
+function renderHallImgGrid(hallIdx){
+  document.getElementById('hall-img-grid').innerHTML=HALL_IMAGES.map(img=>{
+    const active=hallBgs[hallIdx]===img.key?'active':'';
+    const isGrad=!img.bg.startsWith('url(');
+    if(isGrad){
+      return `<div class="hall-img-opt grad-opt ${active}" style="background:${img.bg};" onclick="setHallBg(${hallIdx},'${img.key}')" title="${img.label}"></div>`;
+    }
+    return `<div class="hall-img-opt ${active}" style="background-image:${img.bg};background-size:cover;background-position:center;" onclick="setHallBg(${hallIdx},'${img.key}')" title="${img.label}"></div>`;
+  }).join('');
+}
+function setHallBg(hallIdx,key){
+  hallBgs[hallIdx]=key;
+  saveHallBgs();
+  renderHallImgGrid(hallIdx);
+  renderHallHero();
+}
+
+/* Generic CSS variable setter */
+function setVar(prop,val,labelId){
+  document.documentElement.style.setProperty(prop,val);
+  if(labelId) document.getElementById(labelId).textContent=val;
+}
+
+/* Overlay darkness */
+function setOverlay(val){
+  const v=(val/100).toFixed(2);
+  document.documentElement.style.setProperty('--hall-overlay-op',v);
+  document.getElementById('rv-overlay').textContent=val+'%';
+  renderHallHero();
+}
+
+/* ══════════════════════════════════════════
+   CUSTOMIZER — DESIGN FUNCTIONS
+══════════════════════════════════════════ */
+function openCustomizer(){document.getElementById('customizer').classList.add('open');}
+function closeCustomizer(){document.getElementById('customizer').classList.remove('open');}
+
+function setAccent(acc,hov,light,rgb,el){
+  document.documentElement.style.setProperty('--accent',acc);
+  document.documentElement.style.setProperty('--accent-h',hov);
+  document.documentElement.style.setProperty('--accent-l',light);
+  document.documentElement.style.setProperty('--accent-rgb',rgb);
+  document.getElementById('custom-color').value=acc;
+  document.getElementById('hex-display').textContent=acc;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+  if(el)el.classList.add('active');
+}
+function customAccent(val){
+  document.getElementById('hex-display').textContent=val;
+  document.documentElement.style.setProperty('--accent',val);
+  document.documentElement.style.setProperty('--accent-h',val);
+  document.documentElement.style.setProperty('--accent-l',val+'22');
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+}
+function setTheme(t,el){
+  document.documentElement.setAttribute('data-theme',t);
+  setToggleActive('tg-theme',t);
+  if(window._mapReady) map.invalidateSize();
+}
+function applyFont(pair){
+  window._curFont=pair;
+  const fmap={'syne-dm':{d:'Syne',b:'DM Sans'},'playfair-lato':{d:'Playfair Display',b:'Lato'},
+    'raleway-nunito':{d:'Raleway',b:'Nunito'},'bebas-lato':{d:'Bebas Neue',b:'Lato'},
+    'space-dm':{d:'Space Grotesk',b:'DM Sans'}};
+  const f=fmap[pair]||fmap['syne-dm'];
+  document.body.style.fontFamily=`'${f.b}',sans-serif`;
+  document.querySelectorAll('.brand-text,.card-title,.topbar-title,.kpi-val,.nav-section,.modal-title,.cust-head-title,.hall-hname,.v-name,.cal-month,.cust-section-title').forEach(el=>{
+    el.style.fontFamily=`'${f.d}',sans-serif`;
+  });
+}
+function setFont(pair,el){applyFont(pair);setToggleActive('font-opts',pair);}
+const TILES={
+  'osm':{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'},
+  'carto-light':{url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'},
+  'carto-dark':{url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'},
+  'esri':{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'},
+  'toner':{url:'https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png'},
+};
+let currentTileLayer=null;
+function setTile(key,el){
+  window._curTile=key;setToggleActive('tile-opts',key);
+  if(!window._mapReady){window._pendingTile=key;return;}
+  if(currentTileLayer) map.removeLayer(currentTileLayer);
+  const t=TILES[key]||TILES['osm'];
+  currentTileLayer=L.tileLayer(t.url,{maxZoom:19}).addTo(map);
+}
+const ICON_SETS={
+  emoji:{moving:'🟢',idle:'🟡',stopped:'⚫',alert:'🔔',hall:'🏛',fleet:'🚗',dash:'📊',report:'📈',sos:'🆘',speed:'⚡',geo:'📡',brake:'🔶',engine:'🔑',power:'🔋',idle_i:'⏱'},
+  minimal:{moving:'●',idle:'◐',stopped:'○',alert:'◬',hall:'▣',fleet:'▶',dash:'◈',report:'▦',sos:'✕',speed:'↑',geo:'◎',brake:'!',engine:'⊙',power:'⚠',idle_i:'⏵'},
+  outlined:{moving:'⊕',idle:'⊗',stopped:'⊘',alert:'◇',hall:'□',fleet:'▷',dash:'◻',report:'☰',sos:'⊗',speed:'↗',geo:'⬡',brake:'△',engine:'◯',power:'⬟',idle_i:'▷'},
+};
+window._curIcons='emoji';
+function setIcons(style,el){window._curIcons=style;setToggleActive('tg-icons',style);renderDash();}
+function getIcon(key){return(ICON_SETS[window._curIcons]||ICON_SETS.emoji)[key]||'';}
+function setSidebar(pos,el){
+  document.body.setAttribute('data-sidebar',pos);
+  document.documentElement.style.setProperty('--sidebar-pos',pos==='right'?1:0);
+  const sb=document.getElementById('sidebar');
+  if(pos==='right'){sb.style.borderRight='none';sb.style.borderLeft='1px solid var(--border)';}
+  else{sb.style.borderLeft='none';sb.style.borderRight='1px solid var(--border)';}
+  setToggleActive('tg-sidebar',pos);
+}
+function setRadius(v){document.documentElement.style.setProperty('--radius',v+'px');document.getElementById('rv-radius').textContent=v+'px';}
+function setSidebarWidth(v){document.documentElement.style.setProperty('--sidebar-w',v+'px');document.getElementById('rv-sbw').textContent=v+'px';}
+function setToggleActive(groupId,val){
+  const g=document.getElementById(groupId);if(!g)return;
+  g.querySelectorAll('[data-val]').forEach(el=>el.classList.toggle('active',el.dataset.val===val));
+}
+
+/* ══════════════════════════════════════════
+   SAVE / LOAD DESIGN SETTINGS
+══════════════════════════════════════════ */
+const DS_KEY='cantt_design_settings';
+const DS_DEFAULTS={
+  accent:'#2563eb',accentH:'#1d4ed8',accentL:'#eff6ff',accentRgb:'37,99,235',
+  theme:'light',fontPair:'syne-dm',tile:'osm',icons:'emoji',sidebar:'left',
+  radius:12,gap:16,cpad:20,topbarH:56,sidebarW:252,
+  kpiIcon:40,kpiVal:28,kpiLabel:12,cardTitle:14,cardPad:14,
+  tableFont:13,tablePad:11,thFont:10,navFont:13,fscale:14,
+  formLabel:11,formInput:13,formPad:9,alertFont:13,
+  hallH:160,hallName:16,hallCap:11,overlay:75
+};
+function saveDesignSettings(){
+  const sliders={radius:'radius-range',gap:'gap-range',cpad:'cpad-range',topbarH:'topbar-range',sidebarW:'sbw-range',
+    kpiIcon:'kpi-icon-range',kpiVal:'kpi-val-range',kpiLabel:'kpi-label-range',
+    cardTitle:'ctitle-range',cardPad:'cpad2-range',tableFont:'tfont-range',tablePad:'tpad-range',thFont:'thfont-range',
+    navFont:'navfont-range',fscale:'fscale-range',formLabel:'flabel-range',formInput:'finput-range',formPad:'fpad-range',
+    alertFont:'afont-range',hallH:'hallh-range',hallName:'hallname-range',hallCap:'hallcap-range',overlay:'overlay-range'};
+  const s={
+    accent:getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+    accentH:getComputedStyle(document.documentElement).getPropertyValue('--accent-h').trim(),
+    accentL:getComputedStyle(document.documentElement).getPropertyValue('--accent-l').trim(),
+    accentRgb:getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim(),
+    theme:document.documentElement.getAttribute('data-theme'),
+    fontPair:window._curFont||'syne-dm',tile:window._curTile||'osm',
+    icons:window._curIcons||'emoji',
+    sidebar:document.getElementById('tg-sidebar')?.querySelector('.active')?.dataset.val||'left',
+  };
+  Object.entries(sliders).forEach(([key,id])=>{const el=document.getElementById(id);if(el)s[key]=parseInt(el.value);});
+  try{localStorage.setItem(DS_KEY,JSON.stringify(s));}catch(e){}
+  saveHallBgs();
+  const btn=event?.target;if(btn){const o=btn.textContent;btn.textContent='✓ Saved!';btn.style.background='var(--green)';setTimeout(()=>{btn.textContent=o;btn.style.background='';},1600);}
+}
+function loadDesignSettings(){
+  try{const raw=localStorage.getItem(DS_KEY);if(raw)return{...DS_DEFAULTS,...JSON.parse(raw)};}catch(e){}
+  return{...DS_DEFAULTS};
+}
+function applyDesignSettings(s){
+  const set=(p,v)=>document.documentElement.style.setProperty(p,v);
+  set('--accent',s.accent);set('--accent-h',s.accentH);set('--accent-l',s.accentL);set('--accent-rgb',s.accentRgb);
+  document.getElementById('custom-color').value=s.accent;
+  document.getElementById('hex-display').textContent=s.accent;
+  document.querySelectorAll('.color-swatch').forEach(sw=>sw.classList.toggle('active',sw.dataset.acc===s.accent));
+  document.documentElement.setAttribute('data-theme',s.theme);setToggleActive('tg-theme',s.theme);
+  applyFont(s.fontPair);setToggleActive('font-opts',s.fontPair);
+  window._pendingTile=s.tile;setToggleActive('tile-opts',s.tile);
+  window._curIcons=s.icons;setToggleActive('tg-icons',s.icons);
+  const sbEl=document.querySelector(`#tg-sidebar [data-val="${s.sidebar}"]`);
+  if(sbEl)setSidebar(s.sidebar,sbEl);
+  const vars=[
+    ['--radius',s.radius,'radius-range','rv-radius'],['--card-gap',s.gap,'gap-range','rv-gap'],
+    ['--content-pad',s.cpad,'cpad-range','rv-cpad'],['--topbar-h',s.topbarH,'topbar-range','rv-topbar'],
+    ['--kpi-icon-sz',s.kpiIcon,'kpi-icon-range','rv-kpi-icon'],['--kpi-val-sz',s.kpiVal,'kpi-val-range','rv-kpi-val'],
+    ['--kpi-label-sz',s.kpiLabel,'kpi-label-range','rv-kpi-label'],
+    ['--card-title-sz',s.cardTitle,'ctitle-range','rv-ctitle'],['--card-pad',s.cardPad,'cpad2-range','rv-cpad2'],
+    ['--table-font-sz',s.tableFont,'tfont-range','rv-tfont'],['--table-pad',s.tablePad,'tpad-range','rv-tpad'],
+    ['--th-font-sz',s.thFont,'thfont-range','rv-thfont'],['--nav-font-sz',s.navFont,'navfont-range','rv-navfont'],
+    ['--font-scale',s.fscale,'fscale-range','rv-fscale'],['--form-label-sz',s.formLabel,'flabel-range','rv-flabel'],
+    ['--form-input-sz',s.formInput,'finput-range','rv-finput'],['--form-input-pad',s.formPad,'fpad-range','rv-fpad'],
+    ['--alert-font-sz',s.alertFont,'afont-range','rv-afont'],['--hall-hero-h',s.hallH,'hallh-range','rv-hallh'],
+    ['--hall-name-sz',s.hallName,'hallname-range','rv-hallname'],['--hall-cap-sz',s.hallCap,'hallcap-range','rv-hallcap'],
+  ];
+  vars.forEach(([prop,num,rangeId,labelId])=>{
+    set(prop,num+'px');
+    const r=document.getElementById(rangeId);if(r)r.value=num;
+    const l=document.getElementById(labelId);if(l)l.textContent=num+'px';
+  });
+  // Overlay special (0–1 range)
+  set('--hall-overlay-op',(s.overlay/100).toFixed(2));
+  const or=document.getElementById('overlay-range');if(or)or.value=s.overlay;
+  const ol=document.getElementById('rv-overlay');if(ol)ol.textContent=s.overlay+'%';
+  // Sidebar width
+  set('--sidebar-w',s.sidebarW+'px');
+  const sbwr=document.getElementById('sbw-range');if(sbwr)sbwr.value=s.sidebarW;
+  const sbwl=document.getElementById('rv-sbw');if(sbwl)sbwl.textContent=s.sidebarW+'px';
+}
+function resetCustomizer(){
+  localStorage.removeItem(DS_KEY);
+  hallBgs=['grad','grad','grad','grad','grad'];saveHallBgs();
+  applyDesignSettings({...DS_DEFAULTS});
+  renderHallHero();
+}
+
+/* ══════════════════════════════════════════
+   EDIT BOOKING
+══════════════════════════════════════════ */
+function openEditModal(i){
+  const b=bookings[i];
+  document.getElementById('edit-idx').value=i;
+  document.getElementById('edit-hall').value=b.hall;
+  document.getElementById('edit-date').value=b.date;
+  document.getElementById('edit-event').value=b.event;
+  document.getElementById('edit-contact').value=b.contact;
+  document.getElementById('edit-slot').value=b.slot;
+  document.getElementById('edit-status').value=b.status;
+  document.getElementById('edit-booking-id').textContent='Booking #CNT-'+String(i+1).padStart(4,'0');
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}
+function saveEditBooking(){
+  const i=parseInt(document.getElementById('edit-idx').value);
+  const hall=document.getElementById('edit-hall').value;
+  const date=document.getElementById('edit-date').value;
+  const event=document.getElementById('edit-event').value.trim();
+  const contact=document.getElementById('edit-contact').value.trim();
+  const slot=document.getElementById('edit-slot').value;
+  const status=document.getElementById('edit-status').value;
+  if(!date||!event||!contact){alert('Please fill all fields.');return;}
+  // Check conflict (exclude self)
+  const conflict=bookings.find((b,j)=>j!==i&&b.hall===hall&&b.date===date&&b.status!=='cancelled');
+  if(conflict){alert(`⚠ ${hall} is already booked on ${date} for: ${conflict.event}`);return;}
+  bookings[i]={hall,date,event,slot,contact,status};
+  saveBookings();
+  closeEditModal();
+  renderBTable();renderCal();renderHallHero();renderDash();
+}
+
+/* ══════════════════════════════════════════
+   PDF DOWNLOAD
+══════════════════════════════════════════ */
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const hall=HALLS[selHall];
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210, pw=14;
+
+  // Header bar
+  doc.setFillColor(37,99,235);
+  doc.rect(0,0,W,28,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(18);doc.setFont('helvetica','bold');
+  doc.text('CANTT EVENTS MANAGEMENT',W/2,10,{align:'center'});
+  doc.setFontSize(11);doc.setFont('helvetica','normal');
+  doc.text('Hall Booking Schedule — '+hall.name,W/2,18,{align:'center'});
+  doc.setFontSize(9);
+  doc.text('Generated: '+new Date().toLocaleString('en-GB'),W/2,24,{align:'center'});
+
+  // Hall info box
+  doc.setFillColor(239,246,255);doc.setDrawColor(37,99,235);doc.setLineWidth(.3);
+  doc.rect(pw,32,W-pw*2,16,'FD');
+  doc.setTextColor(15,23,42);doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text(hall.icon+' '+hall.name,pw+4,39);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(71,85,105);
+  doc.text('Capacity: '+hall.cap.toLocaleString()+' guests',pw+4,45);
+  const active=bookings.filter(b=>b.hall===hall.name&&b.status!=='cancelled').length;
+  doc.text('Total Bookings: '+active,W/2,45,{align:'center'});
+  doc.text('Print Date: '+new Date().toLocaleDateString('en-GB'),W-pw-4,45,{align:'right'});
+
+  // Table header
+  let y=56;
+  const cols=[pw,pw+22,pw+48,pw+90,pw+120,pw+158];
+  const heads=['Date','Hall','Event','Time Slot','Contact','Status'];
+  doc.setFillColor(15,23,42);
+  doc.rect(pw,y,W-pw*2,7,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  heads.forEach((h,i)=>doc.text(h,cols[i]+1,y+4.8));
+  y+=7;
+
+  // Table rows — all active bookings for this hall
+  const hbookings=bookings.filter(b=>b.hall===hall.name&&b.status!=='cancelled')
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
+  hbookings.forEach((b,ri)=>{
+    const bg=ri%2===0?[248,250,252]:[255,255,255];
+    doc.setFillColor(...bg);doc.rect(pw,y,W-pw*2,7,'F');
+    doc.setTextColor(71,85,105);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    const vals=[b.date,b.hall,b.event.substring(0,24),b.slot.substring(0,20),b.contact.substring(0,18),b.status.toUpperCase()];
+    const scol=b.status==='confirmed'?[22,163,74]:b.status==='pending'?[217,119,6]:[220,38,38];
+    vals.forEach((v,i)=>{
+      if(i===5){doc.setTextColor(...scol);doc.setFont('helvetica','bold');}
+      else{doc.setTextColor(71,85,105);doc.setFont('helvetica','normal');}
+      doc.text(v,cols[i]+1,y+4.8);
+    });
+    // row border
+    doc.setDrawColor(226,232,240);doc.setLineWidth(.1);
+    doc.line(pw,y+7,W-pw,y+7);
+    y+=7;
+    if(y>270){doc.addPage();y=20;}
+  });
+
+  if(hbookings.length===0){
+    doc.setTextColor(148,163,184);doc.setFontSize(10);
+    doc.text('No active bookings for this hall.',W/2,y+10,{align:'center'});
+    y+=20;
+  }
+
+  // Footer
+  doc.setDrawColor(226,232,240);doc.setLineWidth(.3);
+  doc.line(pw,285,W-pw,285);
+  doc.setTextColor(148,163,184);doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Cantt Events Management System — Wah Cantonment',pw,290);
+  doc.text('Page 1',W-pw,290,{align:'right'});
+
+  doc.save('Cantt_'+hall.name.replace(' ','_')+'_Schedule_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
+/* ══════════════════════════════════════════
+   CUSTOMIZER — STATE & PERSISTENCE
+══════════════════════════════════════════ */
+function clearAllBookings(){
+  if(confirm('Permanently delete ALL bookings? This cannot be undone.')){
+    bookings=[];
+    saveBookings();
+    renderBTable();renderCal();renderHallHero();renderDash();
+    closeCustomizer();
+  }
+}
+
+// Init halls
+renderHallHero();
+renderCal();
+
+// Load saved design settings on startup
+applyDesignSettings(loadDesignSettings());
+</script>
+</body>
+</html>

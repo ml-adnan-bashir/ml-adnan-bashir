@@ -1,0 +1,90 @@
+[
+  {
+    "slug": "raftar",
+    "file": "speedtest.html",
+    "name": "RAFTAR",
+    "category": "Network utility",
+    "mark": "RA",
+    "description": "A browser speed test with an instrument-style dashboard for download speed, upload speed, and latency.",
+    "features": "Analog and digital gauges · configurable appearance · connection measurements",
+    "note": "An internet connection is required.",
+    "highlight": true
+  },
+  {
+    "slug": "zarb",
+    "file": "zarb.html",
+    "name": "ZARB",
+    "category": "Music & rhythm",
+    "mark": "ZR",
+    "description": "Tap along with a rhythm to estimate its tempo. Follow BPM, the running average, and the range of your taps through a customizable gauge.",
+    "features": "Tap tempo · session log · minimum and maximum BPM",
+    "note": "A tap-tempo tool; it does not analyze uploaded audio.",
+    "highlight": true
+  },
+  {
+    "slug": "segstream",
+    "file": "bns.html",
+    "name": "Boundary & State Lab",
+    "category": "Research visualization",
+    "mark": "Δ",
+    "description": "Explore time-series boundaries and states through an interactive SegStream workspace with embedded datasets and saved analysis.",
+    "features": "Signal inspection · window comparisons · boundary and state exploration",
+    "note": "Includes the bundled research data. Initial loading may take a moment.",
+    "highlight": true
+  },
+  {
+    "slug": "net-simulator",
+    "file": "net_latest.html",
+    "name": "NET Practice Simulator",
+    "category": "Learning & assessment",
+    "mark": "Σ",
+    "description": "Practice Mathematics, Physics, and English with a configurable exam, timed sections, worked explanations, and topic-level results.",
+    "features": "Five difficulty levels · saved attempts · grading and review · exports",
+    "note": "Practice material. Internet is needed to load the mathematics renderer.",
+    "highlight": false
+  },
+  {
+    "slug": "urdu-cloud",
+    "file": "death.html",
+    "name": "Urdu Word Cloud",
+    "category": "Language & generative typography",
+    "mark": "اردو",
+    "description": "An evolving composition of Urdu expressions, shaped by script, scale, and color. Explore a different side of my work through typography.",
+    "features": "Urdu font choices · six color palettes · animated word layout",
+    "note": "Includes embedded Urdu fonts.",
+    "highlight": true
+  },
+  {
+    "slug": "erm",
+    "file": "ERM.html",
+    "name": "Enterprise Workspace",
+    "category": "Operations prototype",
+    "mark": "ER",
+    "description": "A browser-based operations workspace connecting tasks, people, planning, approvals, and reporting in one interface.",
+    "features": "Task workflows · monthly planning · audit log · theme customization",
+    "note": "Interactive prototype with demonstration records stored in your browser.",
+    "highlight": false
+  },
+  {
+    "slug": "cantt-events",
+    "file": "ce.html",
+    "name": "Cantt Events",
+    "category": "Operations & spatial visualization",
+    "mark": "CE",
+    "description": "An events-management prototype combining hall bookings, a fleet map, alerts, and operational reports.",
+    "features": "Booking calendar · simulated fleet tracking · map themes · PDF reports",
+    "note": "Demonstration fleet data. Maps and chart libraries require internet.",
+    "highlight": false
+  },
+  {
+    "slug": "tilt-scale",
+    "file": "scale.html",
+    "name": "Tilt Scale",
+    "category": "Physical computing experiment",
+    "mark": "θ",
+    "description": "Explore the relationship between tilt and balance using a phone’s motion sensor, a simple beam, and a known calibration weight.",
+    "features": "Guided setup · zeroing · calibration · saved readings",
+    "note": "Best on a compatible phone over HTTPS; requires sensor permission and a physical setup.",
+    "highlight": false
+  }
+]

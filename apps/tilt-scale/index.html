@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tilt Scale</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080c;
+    --surface: #0f1118;
+    --surface2: #161923;
+    --border: #1e2230;
+    --text: #e4e7f0;
+    --text-dim: #555b6e;
+    --mint: #3dffc2;
+    --mint-dim: #1a9e72;
+    --mint-glow: rgba(61,255,194,0.08);
+    --amber: #ffbe3d;
+    --red: #ff5757;
+    --radius: 18px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    max-width: 440px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ─── Screen system ─── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px 32px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .screen.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    position: relative;
+  }
+
+  /* ─── Progress bar ─── */
+  .progress-bar {
+    display: flex;
+    gap: 6px;
+    padding: 8px 0 24px;
+  }
+  .progress-pip {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    transition: background 0.5s;
+  }
+  .progress-pip.done { background: var(--mint); }
+  .progress-pip.current { background: var(--mint-dim); }
+
+  /* ─── Common elements ─── */
+  .screen-icon {
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  .screen-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .screen-desc {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    margin-bottom: 28px;
+  }
+  .screen-desc b { color: var(--text); font-weight: 600; }
+
+  .spacer { flex: 1; }
+
+  /* ─── Buttons ─── */
+  .btn {
+    font-family: 'Sora', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 14px;
+    padding: 18px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-mint {
+    background: var(--mint);
+    color: var(--bg);
+  }
+  .btn-mint:disabled {
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-row .btn { flex: 1; }
+
+  /* ─── Live data card ─── */
+  .data-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .data-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--mint-dim), transparent);
+  }
+
+  .big-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 56px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .big-unit {
+    font-family: 'Sora', sans-serif;
+    font-size: 20px;
+    font-weight: 300;
+    opacity: 0.5;
+    margin-left: 4px;
+  }
+  .data-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* ─── Stability meter ─── */
+  .stability-meter { margin-top: 20px; }
+  .stability-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stability-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s, background 0.3s;
+    background: var(--red);
+  }
+  .stability-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .stability-status { color: var(--text); font-weight: 500; }
+
+  /* ─── Diagram ─── */
+  .diagram-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .diagram-box svg { width: 100%; max-width: 320px; }
+
+  /* ─── Input field ─── */
+  .field-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .field-group input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    color: var(--mint);
+    width: 80px;
+    text-align: center;
+    outline: none;
+  }
+  .field-group .field-label {
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  /* ─── Weight screen ─── */
+  .weight-ring {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    position: relative;
+    background: radial-gradient(circle, var(--mint-glow) 0%, transparent 70%);
+    transition: border-color 0.5s;
+  }
+  .weight-ring.has-weight { border-color: var(--mint-dim); }
+  .weight-ring .big-number { font-size: 48px; }
+  .weight-ring .data-label { margin-bottom: 4px; }
+
+  /* ─── Stats row ─── */
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .stat-box {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-box .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .stat-box .lbl {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* ─── History ─── */
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 6px;
+  }
+  .history-item .hw {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--mint);
+  }
+  .history-item .ht {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .history-header h3 { font-size: 14px; font-weight: 600; }
+  .history-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ─── Tilt visual ─── */
+  .tilt-visual {
+    width: 100%;
+    height: 56px;
+    position: relative;
+    margin: 12px 0 0;
+  }
+  .tilt-beam {
+    position: absolute;
+    top: 50%;
+    left: 10%; right: 10%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    transform-origin: center center;
+    transition: transform 0.15s ease-out, background 0.3s;
+  }
+  .tilt-beam.tilted { background: var(--mint-dim); }
+  .tilt-pivot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transform: translate(-50%, -50%);
+  }
+
+  /* ─── Toast ─── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 90vw;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ─── Entrance animations ─── */
+  @keyframes float-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .float-in { animation: float-in 0.5s ease forwards; }
+  .float-in-d1 { animation: float-in 0.5s 0.1s ease forwards; opacity: 0; }
+  .float-in-d2 { animation: float-in 0.5s 0.2s ease forwards; opacity: 0; }
+  .float-in-d3 { animation: float-in 0.5s 0.3s ease forwards; opacity: 0; }
+  .float-in-d4 { animation: float-in 0.5s 0.4s ease forwards; opacity: 0; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="toast" id="toast"></div>
+
+  <!-- ═══ SCREEN 0 — Welcome ═══ -->
+  <div class="screen active" id="screen0">
+    <div class="progress-bar">
+      <div class="progress-pip current"></div>
+      <div class="progress-pip"></div>
+      <div class="progress-pip"></div>
+      <div class="progress-pip"></div>
+      <div class="progress-pip"></div>
+    </div>
+    <div class="screen-icon float-in" style="background:var(--mint-glow); border:1px solid var(--mint-dim);">⚖️</div>
+    <h2 class="screen-title float-in-d1">Tilt Scale</h2>
+    <p class="screen-desc float-in-d2">
+      Turn your phone into a experimental balance using its built-in gyroscope.<br><br>
+      You'll need: a <b>ruler or stick</b>, a <b>string</b>, some <b>tape</b>, and a <b>small cup</b>.
+    </p>
+    <div class="diagram-box float-in-d3">
+      <svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg">
+        <line x1="160" y1="8" x2="160" y2="48" stroke="#3dffc2" stroke-width="2" stroke-dasharray="5,4" opacity="0.6"/>
+        <circle cx="160" cy="8" r="4" fill="#3dffc2" opacity="0.4"/>
+        <text x="160" y="4" font-size="7" fill="#555b6e" text-anchor="middle" font-family="Sora">hang here</text>
+        <rect x="35" y="46" width="250" height="6" rx="3" fill="#1e2230"/>
+        <rect x="45" y="56" width="75" height="42" rx="7" fill="#0f1118" stroke="#3dffc2" stroke-width="1.5" opacity="0.9"/>
+        <text x="82" y="82" font-size="11" fill="#3dffc2" text-anchor="middle" font-family="JetBrains Mono">PHONE</text>
+        <path d="M210 56 L218 98 L252 98 L260 56 Z" fill="none" stroke="#555b6e" stroke-width="1.5" stroke-linejoin="round"/>
+        <text x="235" y="83" font-size="9" fill="#555b6e" text-anchor="middle" font-family="Sora">cup</text>
+        <text x="82" y="118" font-size="8" fill="#555b6e" text-anchor="middle" font-family="Sora">tape phone here</text>
+        <text x="235" y="118" font-size="8" fill="#555b6e" text-anchor="middle" font-family="Sora">weigh items here</text>
+        <circle cx="160" cy="49" r="4" fill="#555b6e"/>
+      </svg>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-mint float-in-d4" onclick="startApp()">Get Started</button>
+  </div>
+
+  <!-- ═══ SCREEN 1 — Build Setup ═══ -->
+  <div class="screen" id="screen1">
+    <div class="progress-bar">
+      <div class="progress-pip done"></div>
+      <div class="progress-pip current"></div>
+      <div class="progress-pip"></div>
+      <div class="progress-pip"></div>
+      <div class="progress-pip"></div>
+    </div>
+    <div class="screen-icon" style="background:var(--mint-glow); border:1px solid var(--mint-dim);">🔧</div>
+    <h2 class="screen-title">Build Your Balance</h2>
+    <p class="screen-desc">
+      <b>1.</b> Tie a string to the exact middle of a ruler.<br><br>
+      <b>2.</b> Tape your phone flat onto one end.<br><br>
+      <b>3.</b> Attach a small cup at the other end, same distance from center.<br><br>
+      <b>4.</b> Hang it from a hook or doorknob so it swings freely.
+    </p>
+    <div class="data-card">
+      <div class="data-label">Live Tilt</div>
+      <div class="big-number" id="s1_tilt" style="color:var(--text-dim)">--<span class="big-unit">°</span></div>
+      <div class="tilt-visual">
+        <div class="tilt-beam" id="s1_beam"></div>
+        <div class="tilt-pivot"></div>
+      </div>
+      <p style="font-size:12px; color:var(--text-dim); text-align:center; margin-top:10px;">
+        If the number changes as you tilt — the sensor works!
+      </p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-mint" onclick="goScreen(2)">My Setup is Ready →</button>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goScreen(0)">← Back</button></div>
+  </div>
+
+  <!-- ═══ SCREEN 2 — Zero ═══ -->
+  <div class="screen" id="screen2">
+    <div class="progress-bar">
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+      <div class="progress-pip current"></div>
+      <div class="progress-pip"></div>
+      <div class="progress-pip"></div>
+    </div>
+    <div class="screen-icon" style="background:rgba(255,190,61,0.1); border:1px solid rgba(255,190,61,0.3);">⚖️</div>
+    <h2 class="screen-title">Zero the Scale</h2>
+    <p class="screen-desc">
+      Make sure the cup is <b>empty</b>. Let the beam hang and settle. Wait for the bar to turn <b>green</b>, then tap the button.
+    </p>
+    <div class="data-card">
+      <div class="data-label">Current Tilt</div>
+      <div class="big-number" id="s2_tilt" style="color:var(--amber)">--<span class="big-unit">°</span></div>
+      <div class="tilt-visual">
+        <div class="tilt-beam" id="s2_beam"></div>
+        <div class="tilt-pivot"></div>
+      </div>
+      <div class="stability-meter">
+        <div class="stability-track"><div class="stability-fill" id="s2_stability"></div></div>
+        <div class="stability-label">
+          <span>STABILITY</span>
+          <span class="stability-status" id="s2_status">Waiting…</span>
+        </div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-mint" id="btnZero" onclick="doZero()" disabled>Set Zero Point</button>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goScreen(1)">← Back</button></div>
+  </div>
+
+  <!-- ═══ SCREEN 3 — Calibrate ═══ -->
+  <div class="screen" id="screen3">
+    <div class="progress-bar">
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+      <div class="progress-pip current"></div>
+      <div class="progress-pip"></div>
+    </div>
+    <div class="screen-icon" style="background:rgba(61,255,194,0.08); border:1px solid var(--mint-dim);">🪙</div>
+    <h2 class="screen-title">Calibrate</h2>
+    <p class="screen-desc">
+      Place a <b>known weight</b> in the cup — a coin, a battery, etc. Enter its weight below, wait for stability, then tap Calibrate.
+    </p>
+    <div class="field-group">
+      <input type="number" id="knownWeight" value="5" inputmode="decimal">
+      <span class="field-label">grams (known weight)</span>
+    </div>
+    <div class="data-card">
+      <div class="data-label">Tilt Change from Zero</div>
+      <div class="big-number" id="s3_delta" style="color:var(--mint)">0.00<span class="big-unit">°</span></div>
+      <div class="tilt-visual">
+        <div class="tilt-beam" id="s3_beam"></div>
+        <div class="tilt-pivot"></div>
+      </div>
+      <div class="stability-meter">
+        <div class="stability-track"><div class="stability-fill" id="s3_stability"></div></div>
+        <div class="stability-label">
+          <span>STABILITY</span>
+          <span class="stability-status" id="s3_status">Waiting…</span>
+        </div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-mint" id="btnCal" onclick="doCalibrate()" disabled>Calibrate with This Weight</button>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goScreen(2)">← Re-zero</button></div>
+  </div>
+
+  <!-- ═══ SCREEN 4 — Weigh ═══ -->
+  <div class="screen" id="screen4">
+    <div class="progress-bar">
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+      <div class="progress-pip done"></div>
+    </div>
+    <div class="weight-ring" id="weightRing">
+      <div class="data-label">Weight</div>
+      <div class="big-number" id="s4_weight" style="color:var(--mint)">0.0<span class="big-unit">g</span></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="val" id="s4_tilt">0.00°</div>
+        <div class="lbl">Tilt</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" id="s4_delta">0.00°</div>
+        <div class="lbl">Delta</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" id="s4_sens">--</div>
+        <div class="lbl">°/gram</div>
+      </div>
+    </div>
+    <div class="stability-meter" style="margin-bottom:20px;">
+      <div class="stability-track"><div class="stability-fill" id="s4_stability"></div></div>
+      <div class="stability-label">
+        <span>STABILITY</span>
+        <span class="stability-status" id="s4_status">--</span>
+      </div>
+    </div>
+    <button class="btn btn-mint" onclick="saveReading()">Save This Reading</button>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goScreen(3)">Re-calibrate</button>
+      <button class="btn btn-ghost" onclick="goScreen(2)">Re-zero</button>
+    </div>
+    <div id="historySection" style="margin-top:20px; display:none;">
+      <div class="history-header">
+        <h3>Saved Readings</h3>
+        <span class="history-count" id="historyCount">0</span>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── State ───
+  let currentScreen = 0;
+  let smoothedTilt = 0;
+  let zeroTilt = null;
+  let tiltPerGram = 0;
+  let calibrated = false;
+  let readings = [];
+
+  const BUFFER = 25;
+  let buf = [];
+  const STAB_WINDOW = 40;
+  let stabBuf = [];
+  let stability = 0;
+
+  // ─── Sensor ───
+  function requestPermission() {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(s => { if (s === 'granted') initSensor(); else showToast('Sensor permission denied'); })
+        .catch(() => showToast('Sensor error'));
+    } else {
+      initSensor();
+    }
+  }
+
+  function initSensor() {
+    window.addEventListener('deviceorientation', onSensor);
+  }
+
+  function onSensor(e) {
+    if (e.beta === null) return;
+
+    buf.push(e.beta);
+    if (buf.length > BUFFER) buf.shift();
+    smoothedTilt = buf.reduce((a, b) => a + b, 0) / buf.length;
+
+    stabBuf.push(smoothedTilt);
+    if (stabBuf.length > STAB_WINDOW) stabBuf.shift();
+    if (stabBuf.length > 3) {
+      let mean = stabBuf.reduce((a, b) => a + b, 0) / stabBuf.length;
+      let v = stabBuf.reduce((s, x) => s + (x - mean) ** 2, 0) / stabBuf.length;
+      stability = Math.max(0, Math.min(100, (1 - Math.sqrt(v) / 0.4) * 100));
+    }
+
+    updateUI();
+  }
+
+  // Auto-init for non-iOS
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission !== 'function') {
+    initSensor();
+  }
+
+  // ─── UI Updates ───
+  function updateUI() {
+    let tiltStr = smoothedTilt.toFixed(2);
+    let delta = zeroTilt !== null ? (smoothedTilt - zeroTilt) : 0;
+    let deltaStr = delta.toFixed(2);
+    let beamClamp = (v) => Math.max(-15, Math.min(15, v));
+
+    // Screen 1: live tilt
+    let s1t = document.getElementById('s1_tilt');
+    if (s1t) {
+      s1t.innerHTML = tiltStr + '<span class="big-unit">°</span>';
+      s1t.style.color = 'var(--mint)';
+      document.getElementById('s1_beam').style.transform = 'rotate(' + beamClamp(smoothedTilt * 0.5) + 'deg)';
+    }
+
+    // Screen 2: zero
+    if (currentScreen === 2) {
+      document.getElementById('s2_tilt').innerHTML = tiltStr + '<span class="big-unit">°</span>';
+      document.getElementById('s2_beam').style.transform = 'rotate(' + beamClamp(smoothedTilt * 0.5) + 'deg)';
+      doStability('s2_stability', 's2_status');
+      document.getElementById('btnZero').disabled = stability < 70;
+      document.getElementById('s2_tilt').style.color = stability >= 70 ? 'var(--mint)' : 'var(--amber)';
+    }
+
+    // Screen 3: calibrate
+    if (currentScreen === 3 && zeroTilt !== null) {
+      document.getElementById('s3_delta').innerHTML = deltaStr + '<span class="big-unit">°</span>';
+      let b = document.getElementById('s3_beam');
+      b.style.transform = 'rotate(' + beamClamp(delta * 3) + 'deg)';
+      b.classList.toggle('tilted', Math.abs(delta) > 0.1);
+      doStability('s3_stability', 's3_status');
+      document.getElementById('btnCal').disabled = stability < 60 || Math.abs(delta) < 0.05;
+    }
+
+    // Screen 4: weigh
+    if (currentScreen === 4 && calibrated) {
+      let weight = Math.abs(delta / tiltPerGram);
+      document.getElementById('s4_weight').innerHTML = weight.toFixed(1) + '<span class="big-unit">g</span>';
+      document.getElementById('s4_tilt').textContent = tiltStr + '°';
+      document.getElementById('s4_delta').textContent = deltaStr + '°';
+      document.getElementById('weightRing').classList.toggle('has-weight', Math.abs(delta) > 0.05);
+      doStability('s4_stability', 's4_status');
+    }
+  }
+
+  function doStability(fillId, statusId) {
+    let fill = document.getElementById(fillId);
+    let status = document.getElementById(statusId);
+    fill.style.width = stability + '%';
+    if (stability > 75) {
+      fill.style.background = 'var(--mint)';
+      status.textContent = 'Stable';
+      status.style.color = 'var(--mint)';
+    } else if (stability > 40) {
+      fill.style.background = 'var(--amber)';
+      status.textContent = 'Settling…';
+      status.style.color = 'var(--amber)';
+    } else {
+      fill.style.background = 'var(--red)';
+      status.textContent = 'Moving';
+      status.style.color = 'var(--red)';
+    }
+  }
+
+  // ─── Actions ───
+  function startApp() {
+    requestPermission();
+    goScreen(1);
+  }
+
+  function doZero() {
+    zeroTilt = smoothedTilt;
+    calibrated = false;
+    tiltPerGram = 0;
+    showToast('✓ Zero set at ' + smoothedTilt.toFixed(2) + '°');
+    setTimeout(() => goScreen(3), 500);
+  }
+
+  function doCalibrate() {
+    let grams = parseFloat(document.getElementById('knownWeight').value);
+    if (!grams || grams <= 0) { showToast('Enter a valid weight'); return; }
+    let delta = smoothedTilt - zeroTilt;
+    if (Math.abs(delta) < 0.05) { showToast('No tilt detected'); return; }
+    tiltPerGram = delta / grams;
+    calibrated = true;
+    document.getElementById('s4_sens').textContent = Math.abs(tiltPerGram).toFixed(3);
+    showToast('✓ Calibrated! Ready to weigh.');
+    setTimeout(() => goScreen(4), 500);
+  }
+
+  function saveReading() {
+    if (!calibrated) return;
+    let delta = smoothedTilt - zeroTilt;
+    let w = Math.abs(delta / tiltPerGram).toFixed(1);
+    readings.push({ weight: w, time: new Date().toLocaleTimeString() });
+    renderHistory();
+    showToast('Saved: ' + w + ' g');
+  }
+
+  // ─── Navigation ───
+  function goScreen(n) {
+    let prev = document.getElementById('screen' + currentScreen);
+    let next = document.getElementById('screen' + n);
+    let forward = n > currentScreen;
+
+    prev.classList.remove('active');
+    prev.style.transform = forward ? 'translateX(-60px)' : 'translateX(60px)';
+    prev.style.opacity = '0';
+    prev.style.pointerEvents = 'none';
+    prev.style.position = 'absolute';
+
+    next.style.transform = forward ? 'translateX(60px)' : 'translateX(-60px)';
+    next.style.opacity = '0';
+    next.style.position = 'relative';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        next.classList.add('active');
+        next.style.transform = 'translateX(0)';
+        next.style.opacity = '1';
+        next.style.pointerEvents = 'auto';
+      });
+    });
+
+    currentScreen = n;
+  }
+
+  // ─── History ───
+  function renderHistory() {
+    document.getElementById('historySection').style.display = 'block';
+    document.getElementById('historyCount').textContent = readings.length;
+    document.getElementById('historyList').innerHTML = readings.slice().reverse().map(r =>
+      '<div class="history-item"><span class="hw">' + r.weight + ' g</span><span class="ht">' + r.time + '</span></div>'
+    ).join('');
+  }
+
+  // ─── Toast ───
+  function showToast(msg) {
+    let t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
